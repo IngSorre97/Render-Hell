@@ -20,24 +20,9 @@ namespace IngSorre97.RenderHell.Brush3D
             m_renderPass = new Brush3DRenderPass(meshRenderer, meshFilter, m_material, m_computeShader);
         }
 
-        public void On()
-        {
-            m_renderPass.SetActive(true);
-        }
-
-        public void Off()
-        {
-            m_renderPass.SetActive(false);
-        }
-
         public void SetPosition(Vector3 pos)
         {
             m_renderPass.SetPosition(pos);
-        }
-
-        public void SetColor(Color color, float rimPower)
-        {
-            throw new System.NotImplementedException();
         }
 
         public void SetRadius(float radius)
@@ -45,34 +30,54 @@ namespace IngSorre97.RenderHell.Brush3D
             m_renderPass.SetRadius(radius);
         }
 
+        public void SetIntersectionActivation(bool active)
+        {
+            m_renderPass.SetActive(active);
+        }
+
+        public void SetIntersectionColor(Color color, float rimPower)
+        {
+            throw new NotImplementedException();
+        }
+
         public void SetOutlineColor(Color color)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public void SetOutlineThickness(float thickness)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
-        public void ApplyColorToModel(Color color, float rimPower)
+        public void SetDrawingActivation(bool active)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
-        public void RemoveColorFromModel()
+        public void SetDrawingColor(Color color, float rimPower)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
-        public void ClipAllColoredModelParts()
+        public void ResetDrawnRegion()
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
-        public void RemoveAllColors()
+        public void SetClippingActivation(bool active)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
+        }
+
+        public void ClipDrawnRegion()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ResetClippedRegion()
+        {
+            throw new NotImplementedException();
         }
     }
 }
