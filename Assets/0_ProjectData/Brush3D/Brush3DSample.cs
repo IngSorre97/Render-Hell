@@ -18,7 +18,7 @@ namespace IngSorre97.RenderHell.Samples
         void Start()
         {
             m_brush3D = RenderHellAPI.CreateBrush3D(m_meshRenderer, m_meshFilter);
-            m_brush3D.On();
+            m_brush3D.SetIntersectionActivation(true);
         }
 
         void Update()

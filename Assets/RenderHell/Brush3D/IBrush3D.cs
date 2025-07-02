@@ -4,26 +4,28 @@ namespace IngSorre97.RenderHell.Brush3D
 {
     public interface IBrush3D
     {
-        void On();
-        
-        void Off();
-        
         void SetPosition(Vector3 pos);
         
-        void SetColor(Color color, float rimPower);
-        
         void SetRadius(float radius);
+        
+        void SetIntersectionActivation(bool active);
+        
+        void SetIntersectionColor(Color color, float rimPower);
         
         void SetOutlineColor(Color color);
         
         void SetOutlineThickness(float thickness);
         
-        void ApplyColorToModel(Color color, float rimPower);
+        void SetDrawingActivation(bool active);
         
-        void RemoveColorFromModel(); //NOTA: eredita posizione da SetPosition e radius da SetRadius
+        void SetDrawingColor(Color color, float rimPower);
         
-        void ClipAllColoredModelParts();
+        void ResetDrawnRegion();
         
-        void RemoveAllColors();
+        void SetClippingActivation(bool active);
+
+        void ClipDrawnRegion();
+
+        void ResetClippedRegion();
     }
 }
