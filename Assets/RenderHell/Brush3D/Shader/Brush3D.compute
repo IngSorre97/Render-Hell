@@ -10,10 +10,12 @@ RWTexture3D<float> _SelectionMask;
 float3 _CursorObjPos;
 float _CursorRadius;
 
+float _Intersecting;
+
 [numthreads(8,8,8)]
 void UpdateMask (uint3 id : SV_DispatchThreadID)
 {
-    if (ClipId(id) || ClipId(_CursorObjPos))
+    if (ClipId(id) || ClipId(_CursorObjPos) || when_eq(0.0f, _Intersecting))
     {
         return;
     }
