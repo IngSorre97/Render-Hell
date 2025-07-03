@@ -1,6 +1,8 @@
-﻿using System.Resources;
+﻿using System;
+using System.Resources;
 using IngSorre97.RenderHell.Brush3D;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace IngSorre97.RenderHell
 {
@@ -13,11 +15,27 @@ namespace IngSorre97.RenderHell
             {
                 throw new MissingManifestResourceException("Unable to find Brush3D prefab in Resources folder!");
             }
+
+            if (!IsMeshRendererMaterialValid(meshRenderer))
+            {
+                throw new FormatException("Mesh renderer material is not valid for Brush3D!");
+            }
             
             Brush3D.Brush3D brush3D = Object.Instantiate(prefab);
             brush3D.Setup(meshRenderer, meshFilter);
             brush3D.name = "Brush3D - " + meshRenderer.gameObject.name;
             return brush3D;
-        } 
+        }
+        
+        static bool IsMeshRendererMaterialValid(MeshRenderer meshRenderer)
+        {
+            if (meshRenderer.material == null)
+            {
+                Debug.LogError("No material found in mesh renderer");
+                return false;
+            }
+            
+            return true;
+        }
     }
 }

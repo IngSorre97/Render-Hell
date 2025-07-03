@@ -181,10 +181,6 @@ Shader "UX/Standard"
             #pragma shader_feature _IGNORE_Z_SCALE
 
             #include "UnityCG.cginc"
-            #include "UnityUI.cginc"
-            #include "UnityStandardConfig.cginc"
-            #include "UnityStandardUtils.cginc"
-            #include "MixedRealityShaderUtils.cginc"
 
             // This define will get commented in by the UpgradeShaderForUniversalRenderPipeline method.
             #define _RENDER_PIPELINE
