@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -22,15 +23,18 @@ namespace IngSorre97.RenderHell.Brush3D
 
         bool m_active;
 
-        public Brush3DRenderPass(MeshRenderer meshRenderer, MeshFilter meshFilter, Material material, ComputeShader computeShader) : base("Brush3DPass", RENDER_PASS_EVENT, Camera.main)
+        public Brush3DRenderPass(MeshRenderer meshRenderer, MeshFilter meshFilter, ComputeShader computeShader)
+            : base("Brush3DPass", RENDER_PASS_EVENT, Camera.main)
         {
             m_meshRenderer = meshRenderer;
-            m_material = Object.Instantiate(material);
+            m_material = Object.Instantiate(meshRenderer.material);
             m_computeShader = Object.Instantiate(computeShader);
             m_selectionMaskKernel = m_computeShader.FindKernel("UpdateMask");
             
             SetTexture3D(SELECTION_MASK_SIZE);
             SetBounds(meshFilter);
+            
+            meshRenderer.materials = Array.Empty<Material>();
         }
 
         public override void Dispose()
@@ -43,12 +47,15 @@ namespace IngSorre97.RenderHell.Brush3D
         
         public override bool ShouldExecutePass()
         {
-            return m_active;
+            return true;
         }
 
         public void SetActive(bool active)
         {
             m_active = active;
+            
+            m_computeShader.SetFloat(RenderHellShaderIDs.Intersecting, active ?  1.0f : 0.0f);
+            m_material.SetFloat(RenderHellShaderIDs.Intersecting, active ?  1.0f : 0.0f);
         }
         
         public void SetPosition(Vector3 pos)

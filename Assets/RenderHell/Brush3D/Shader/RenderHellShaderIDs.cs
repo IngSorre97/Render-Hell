@@ -10,5 +10,6 @@ namespace IngSorre97.RenderHell
         public static int CursorRadius { get; } = Shader.PropertyToID("_CursorRadius");
         public static int BoundsMin { get; } = Shader.PropertyToID("_BoundsMin");
         public static int BoundsMax { get; } = Shader.PropertyToID("_BoundsMax");
+        public static int Intersecting { get; } = Shader.PropertyToID("_Intersecting");
     }
 }
