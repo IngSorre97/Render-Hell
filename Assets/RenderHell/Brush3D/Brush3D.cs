@@ -6,7 +6,6 @@ namespace IngSorre97.RenderHell.Brush3D
     class Brush3D : MonoBehaviour, IBrush3D
     {
         [SerializeField] ComputeShader m_computeShader;
-        [SerializeField] Material m_material;
         
         Brush3DRenderPass m_renderPass;
 
@@ -17,7 +16,7 @@ namespace IngSorre97.RenderHell.Brush3D
 
         public void Setup(MeshRenderer meshRenderer, MeshFilter meshFilter)
         {
-            m_renderPass = new Brush3DRenderPass(meshRenderer, meshFilter, m_material, m_computeShader);
+            m_renderPass = new Brush3DRenderPass(meshRenderer, meshFilter, m_computeShader);
         }
 
         public void SetPosition(Vector3 pos)
