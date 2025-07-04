@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace IngSorre97.RenderHell.Brush3D
 {
@@ -8,6 +7,9 @@ namespace IngSorre97.RenderHell.Brush3D
         const int SELECTION_MASK_SIZE = 256;
         
         [SerializeField] ComputeShader m_computeShader;
+
+        public float Radius => m_renderPass.Radius;
+        public float OutlineThickness => m_renderPass.OutlineThickness;
 
         Brush3DRenderPass m_renderPass;
         

@@ -11,6 +11,9 @@ namespace IngSorre97.RenderHell.Brush3D
     {
         const RenderPassEvent RENDER_PASS_EVENT = RenderPassEvent.AfterRenderingTransparents;
 
+        public float Radius { get; private set; }
+        public float OutlineThickness { get; private set; }
+        
         readonly MeshRenderer m_meshRenderer;
         readonly Bounds m_bounds;
         readonly float m_boundsExtent;
@@ -67,9 +70,18 @@ namespace IngSorre97.RenderHell.Brush3D
         
         public void SetRadius(float radius)
         {
-            float normalizedRadius = Mathf.Clamp01(radius / m_boundsExtent);
+            Radius = radius;
+            float normalizedRadius = NormalizeLengthInBoundsExtent(radius);
             m_computeShader.SetFloat(RenderHellShaderIDs.CursorNormalizedRadius, normalizedRadius);
             m_material.SetFloat(RenderHellShaderIDs.CursorNormalizedRadius, normalizedRadius);
+
+            if (OutlineThickness <= radius)
+            {
+                return;
+            }
+
+            Debug.LogWarning($"Scaled down outline thickness to {radius}");
+            SetOutlineThickness(radius);
         }
 
         public void SetIntersectionActivation(bool active)
@@ -87,12 +99,20 @@ namespace IngSorre97.RenderHell.Brush3D
 
         public void SetOutlineColor(Color color)
         {
-            
+            m_material.SetColor(RenderHellShaderIDs.OutlineColor, color);
         }
 
         public void SetOutlineThickness(float thickness)
         {
+            if (thickness > Radius)
+            {
+                Debug.LogWarning($"Thickness {thickness} would be greater than {Radius}");
+                return;
+            }
             
+            OutlineThickness = thickness;
+            float normalizedOutlineThickness = NormalizeLengthInBoundsExtent(thickness);
+            m_material.SetFloat(RenderHellShaderIDs.OutlineThickness, normalizedOutlineThickness);
         }
 
         public void SetDrawingActivation(bool active)
@@ -150,6 +170,11 @@ namespace IngSorre97.RenderHell.Brush3D
             
             m_computeShader.SetFloat(RenderHellShaderIDs.SelectionMaskSize, size);
             m_material.SetFloat(RenderHellShaderIDs.SelectionMaskSize, size);
+        }
+
+        float NormalizeLengthInBoundsExtent(float length)
+        {
+            return Mathf.Clamp01(length / m_boundsExtent);
         }
 
         protected override void OnPassExecute(CommandBuffer commandBuffer, ScriptableRenderContext context, ref RenderingData renderingData)
