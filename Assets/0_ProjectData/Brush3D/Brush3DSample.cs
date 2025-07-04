@@ -18,6 +18,7 @@ namespace IngSorre97.RenderHell.Samples
         [SerializeField] bool m_intersecting;
         [SerializeField] bool m_drawing;
         [SerializeField] bool m_clipping;
+        [SerializeField] bool m_erasingDrawn;
         [SerializeField] [Range(0.0f, 25.0f)] float m_radius;
         [Space]
         [SerializeField] [Range(0.0f, 10.0f)] float m_intersectionRimPower;
@@ -68,6 +69,7 @@ namespace IngSorre97.RenderHell.Samples
             m_brush3D.SetIntersectionActivation(m_intersecting);
             m_brush3D.SetDrawingActivation(m_drawing);
             m_brush3D.SetClippingActivation(m_clipping);
+            m_brush3D.SetErasingDrawnActivation(m_erasingDrawn);
             m_brush3D.SetRadius(m_radius);
             
             m_brush3D.SetIntersectionColor(m_intersectionColor, m_intersectionRimPower);
