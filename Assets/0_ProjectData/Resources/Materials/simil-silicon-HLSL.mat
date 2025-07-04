@@ -27,7 +27,6 @@ Material:
   m_ValidKeywords:
   - _ALPHABLEND_ON
   - _DISABLE_ALBEDO_MAP
-  - _PROXIMITY_LIGHT
   - _PROXIMITY_LIGHT_TWO_SIDED
   - _RIM_LIGHT
   m_InvalidKeywords:
@@ -180,7 +179,7 @@ Material:
     - _NormalMapScale: 1
     - _OcclusionStrength: 1
     - _Parallax: 0.005
-    - _ProximityLight: 1
+    - _ProximityLight: 0
     - _ProximityLightSubtractive: 0
     - _ProximityLightTwoSided: 1
     - _QueueOffset: 0
