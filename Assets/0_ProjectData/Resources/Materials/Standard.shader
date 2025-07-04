@@ -2450,9 +2450,9 @@ Shader "UX/Standard"
 
 #if defined(_NORMAL_MAP)
 #if defined(_TRIPLANAR_MAPPING)
-                fixed3 tangentNormalX = UnpackScaleNormal(tex2D(_NormalMap, uvX), _NormalMapScale);
-                fixed3 tangentNormalY = UnpackScaleNormal(tex2D(_NormalMap, uvY), _NormalMapScale);
-                fixed3 tangentNormalZ = UnpackScaleNormal(tex2D(_NormalMap, uvZ), _NormalMapScale);
+                fixed3 tangentNormalX = fixed3(0.0, 0.0, 0.0);//UnpackScaleNormal(tex2D(_NormalMap, uvX), _NormalMapScale);
+                fixed3 tangentNormalY = fixed3(0.0, 0.0, 0.0);//UnpackScaleNormal(tex2D(_NormalMap, uvY), _NormalMapScale);
+                fixed3 tangentNormalZ = fixed3(0.0, 0.0, 0.0);//UnpackScaleNormal(tex2D(_NormalMap, uvZ), _NormalMapScale);
                 tangentNormalX.x *= axisSign.x;
                 tangentNormalY.x *= axisSign.y;
                 tangentNormalZ.x *= -axisSign.z;

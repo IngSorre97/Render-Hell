@@ -1,7 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using IngSorre97.RenderHell.Brush3D;
 using Microsoft.MixedReality.Toolkit.Utilities;
 using UnityEngine;
+using UnityEngine.Serialization;
+// ReSharper disable InvertIf
 
 namespace IngSorre97.RenderHell.Samples
 {
@@ -13,33 +16,84 @@ namespace IngSorre97.RenderHell.Samples
 
         [Header("Control Panel")]
         [SerializeField] bool m_intersecting;
-        [SerializeField] [Range(0.0f, 50.0f)] float m_radius;
-
+        [SerializeField] bool m_drawing;
+        [SerializeField] bool m_clipping;
+        [SerializeField] bool m_erasingDrawn;
+        [SerializeField] [Range(0.0f, 25.0f)] float m_radius;
+        [Space]
+        [SerializeField] [Range(0.0f, 10.0f)] float m_intersectionRimPower;
+        [SerializeField] Color m_intersectionColor;
+        [Space]
+        [SerializeField] [Range(0.0f, 50.0f)] float m_outlineThickness;
+        [SerializeField] Color m_outlineColor;
+        [Space]
+        [SerializeField] [Range(0.0f, 10.0f)] float m_drawingRimPower;
+        [SerializeField] Color m_drawingColor;
+        
+        [Space]
+        [Header("Update")]
+        [SerializeField] bool m_updateLoop;
         [SerializeField] bool m_update;
-
+        [SerializeField] bool m_resetDrawnRegion;
+        [SerializeField] bool m_clipDrawnRegion;
+        [SerializeField] bool m_resetClippedRegion;
+        
         IBrush3D m_brush3D;
         
         void Start()
         {
             m_update = false;
+            m_resetDrawnRegion = false;
+            m_clipDrawnRegion = false;
+            m_resetClippedRegion = false;
             
             m_brush3D = RenderHellAPI.CreateBrush3D(m_meshRenderer, m_meshFilter);
-            m_brush3D.SetIntersectionActivation(true);
-            m_brush3D.SetRadius(m_radius);
+            UpdateBrush3D();
         }
 
         void Update()
         {
             UpdateCursorPosition();
 
-            if (!m_update)
+            if (!m_update && !m_updateLoop)
             {
                 return;
             }
             m_update = false;
             
+            UpdateBrush3D();
+        }
+
+        void UpdateBrush3D()
+        {
             m_brush3D.SetIntersectionActivation(m_intersecting);
+            m_brush3D.SetDrawingActivation(m_drawing);
+            m_brush3D.SetClippingActivation(m_clipping);
+            m_brush3D.SetErasingDrawnActivation(m_erasingDrawn);
             m_brush3D.SetRadius(m_radius);
+            
+            m_brush3D.SetIntersectionColor(m_intersectionColor, m_intersectionRimPower);
+            m_brush3D.SetOutlineThickness(m_outlineThickness);
+            m_brush3D.SetOutlineColor(m_outlineColor);
+            m_brush3D.SetDrawingColor(m_drawingColor, m_drawingRimPower);
+            
+            if (m_resetDrawnRegion)
+            {
+                m_brush3D.ResetDrawnRegion();
+                m_resetDrawnRegion = false;
+            }
+            
+            if (m_clipDrawnRegion)
+            {
+                m_brush3D.ClipDrawnRegion();
+                m_clipDrawnRegion = false;
+            }
+            
+            if (m_resetClippedRegion)
+            {
+                m_brush3D.ResetClippedRegion();
+                m_resetClippedRegion = false;
+            }
         }
 
         void UpdateCursorPosition()

@@ -112,12 +112,11 @@ Shader "UX/Standard-HLSL"
         Pass
         {
             Name "Main"
-            Tags{ "RenderType" = "Opaque" "LightMode" = "UniversalForward" "RenderPipeline" = "UniversalPipeline" }
+            Tags{ "Queue" = "Transparent" "RenderType" = "Transparent" "RenderPipeline" = "UniversalPipeline" }
             LOD 100
-            Blend[_SrcBlend][_DstBlend]
-            BlendOp[_BlendOp]
-            ZTest[_ZTest]
-            ZWrite[_ZWrite]
+            Blend One OneMinusSrcAlpha
+            ZTest Always
+            ZWrite Off
             Cull[_CullMode]
             Offset[_ZOffsetFactor],[_ZOffsetUnits]
             ColorMask[_ColorWriteMask]
@@ -184,6 +183,8 @@ Shader "UX/Standard-HLSL"
 
             #include "Assets/RenderHell/Brush3D/Shader/Brush3D.cginc"
 
+/* ******************************************** #DEFINE ************************************************************* */
+
 #if defined(_TRIPLANAR_MAPPING) || defined(_DIRECTIONAL_LIGHT) || defined(_SPHERICAL_HARMONICS) || defined(_REFLECTIONS) || defined(_RIM_LIGHT) || defined(_PROXIMITY_LIGHT) || defined(_ENVIRONMENT_COLORING)
             #define _NORMAL
 #else
@@ -245,6 +246,8 @@ Shader "UX/Standard-HLSL"
             #undef _UV
 #endif
 
+/* ******************************************** VERTEX INPUT ******************************************************** */
+            
             struct vertInput
             {
                 float4 vertex : POSITION;
@@ -265,6 +268,8 @@ Shader "UX/Standard-HLSL"
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
+/* ******************************************** VERTEX TO FRAGMENT INPUT ******************************************** */
+            
             struct v2f
             {
                 float4 position : SV_POSITION;
@@ -312,11 +317,13 @@ Shader "UX/Standard-HLSL"
 #endif
 #endif
 
-                float3 normalizedUV : TEXCOORD4;
+                float3 brush3DNormalizedUV : TEXCOORD5;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
+/* ******************************************** PROPERTIES ********************************************************** */
+            
             UNITY_INSTANCING_BUFFER_START(Props)
             UNITY_DEFINE_INSTANCED_PROP(float4, _Color)
 
@@ -569,6 +576,8 @@ Shader "UX/Standard-HLSL"
             }
 #endif
 
+/* ******************************************** VERTEX SHADER ******************************************************* */
+            
             v2f vert(vertInput v)
             {
                 v2f o;
@@ -577,8 +586,9 @@ Shader "UX/Standard-HLSL"
                 UNITY_TRANSFER_INSTANCE_ID(v, o);
 
                 float4 vertexPosition = v.vertex;
-                o.normalizedUV = ComputeNormalizedUV(v.vertex.xyz);
 
+                o.brush3DNormalizedUV = ComputeBrush3DNormalizedUV(vertexPosition.xyz);
+                
 #if defined(_WORLD_POSITION) || defined(_VERTEX_EXTRUSION)
                 float3 worldVertexPosition = mul(unity_ObjectToWorld, vertexPosition).xyz;
 #endif
@@ -758,10 +768,20 @@ Shader "UX/Standard-HLSL"
                 return o;
             }
 
+/* ******************************************** FRAGMENT SHADER ***************************************************** */
+            
             float4 frag(v2f i, bool facing : SV_IsFrontFace) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(i);
 
+                float brush3DStoredValue = GetBrush3DStoredValue(i.brush3DNormalizedUV);
+                float brush3DIsInsideSphere = IsInsideCursorSphere(i.brush3DNormalizedUV);
+                float brush3DIsInsideOutline = IsInsideCursorOutline(i.brush3DNormalizedUV, brush3DIsInsideSphere);
+                
+#if defined(_RIM_LIGHT)
+                _RimPower = ComputeBrush3DRimPower(_RimPower, brush3DStoredValue, brush3DIsInsideSphere);
+#endif
+                
 #if defined(_TRIPLANAR_MAPPING)
                 // Calculate triplanar uvs and apply texture scale and offset values like TRANSFORM_TEX.
                 float3 triplanarBlend = pow(abs(i.triplanarNormal), _TriplanarMappingBlendSharpness);
@@ -892,7 +912,7 @@ Shader "UX/Standard-HLSL"
 #endif
 
                 albedo *= UNITY_ACCESS_INSTANCED_PROP(Props, _Color);
-                albedo += Brush3D(i.normalizedUV);
+                albedo += ComputeBrush3DColor(brush3DStoredValue, brush3DIsInsideSphere, brush3DIsInsideOutline);
 
 #if defined(_VERTEX_COLORS)
                 albedo *= i.color;
