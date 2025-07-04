@@ -58,7 +58,7 @@ inline float ClipId(uint3 id)
     return or(or(when_lt(id.x, 0), when_lt(id.y, 0)), when_lt(id.z, 0));
 }
 
-inline bool IsInsideSphere(float3 pos, float3 center, int radius)
+inline bool IsInsideSphere(float3 pos, float3 center, float radius)
 {
     return dot(pos - center, pos - center) <= radius * radius;
 }

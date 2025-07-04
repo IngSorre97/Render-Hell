@@ -6,21 +6,31 @@
 #include "Assets/RenderHell/Common/ShaderUtilities/ShaderUtilities.cginc"
 
 RWTexture3D<float> _SelectionMask;
+int _SelectionMaskSize;
 
-float3 _CursorObjPos;
-float _CursorRadius;
+float3 _CursorNormalizedPos;
+float _CursorNormalizedRadius;
 
 float _Intersecting;
+float _Drawing;
+float _Clipping;
 
 [numthreads(8,8,8)]
 void UpdateMask (uint3 id : SV_DispatchThreadID)
 {
-    if (ClipId(id) || ClipId(_CursorObjPos) || when_eq(0.0f, _Intersecting))
+    if (ClipId(id) || ClipId(_CursorNormalizedPos) || when_eq(0.0f, _Intersecting))
     {
         return;
     }
+    
+    float storedValue = _SelectionMask[id];
+    float isVoxelClipped = when_eq(storedValue, -1.0f);
 
-    float isInsideCursorSphere = IsInsideSphere(id, _CursorObjPos, _CursorRadius);
-    float maskedValue = _SelectionMask[id];
-    _SelectionMask[id] = lerp(maskedValue, 1.0f, isInsideCursorSphere);
+    float newValue = lerp(0.0f, 1.0f, _Drawing);
+    newValue = lerp(newValue, -1.0f, _Clipping);
+    newValue = lerp(newValue, -1.0f, isVoxelClipped);
+
+    float3 normalizedPos = float3(id.x / (float) _SelectionMaskSize, id.y / (float) _SelectionMaskSize, id.z / (float) _SelectionMaskSize);
+    float isInsideCursorSphere = IsInsideSphere(normalizedPos, _CursorNormalizedPos, _CursorNormalizedRadius);
+    _SelectionMask[id] = lerp(storedValue, newValue, isInsideCursorSphere);
 }

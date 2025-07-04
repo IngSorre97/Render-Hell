@@ -20,9 +20,14 @@ namespace IngSorre97.RenderHell
             {
                 throw new FormatException("Mesh renderer material is not valid for Brush3D!");
             }
+
+            if (meshFilter.mesh == null)
+            {
+                throw new FormatException("Mesh filter has no mesh!");
+            }
             
             Brush3D.Brush3D brush3D = Object.Instantiate(prefab);
-            brush3D.Setup(meshRenderer, meshFilter);
+            brush3D.Setup(meshRenderer, meshFilter.mesh.bounds);
             brush3D.name = "Brush3D - " + meshRenderer.gameObject.name;
             return brush3D;
         }
