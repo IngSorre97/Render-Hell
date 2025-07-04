@@ -17,6 +17,7 @@ float _CursorNormalizedRadius;
 float _Intersecting;
 float _Drawing;
 float _Clipping;
+float _ErasingDrawn;
 
 [numthreads(8,8,8)]
 void UpdateMask (uint3 id : SV_DispatchThreadID)
@@ -32,6 +33,7 @@ void UpdateMask (uint3 id : SV_DispatchThreadID)
     float newValue = lerp(0.0f, 1.0f, _Drawing);
     newValue = lerp(newValue, -1.0f, _Clipping);
     newValue = lerp(newValue, -1.0f, isVoxelClipped);
+    newValue = lerp(newValue, -1.0f, and(when_eq(storedValue, 1.0f), _ErasingDrawn));
 
     float3 normalizedPos = float3(id.x / (float) _SelectionMaskSize, id.y / (float) _SelectionMaskSize, id.z / (float) _SelectionMaskSize);
     float isInsideCursorSphere = IsInsideSphere(normalizedPos, _CursorNormalizedPos, _CursorNormalizedRadius);

@@ -99,6 +99,11 @@ namespace IngSorre97.RenderHell.Brush3D
             m_renderPass.SetDrawingColor(color, rimPower);
         }
 
+        public void SetErasingDrawnActivation(bool active)
+        {
+            m_renderPass.SetErasingDrawnActivation(active);
+        }
+
         public void ResetDrawnRegion()
         {
             m_renderPass.ResetDrawnRegion();

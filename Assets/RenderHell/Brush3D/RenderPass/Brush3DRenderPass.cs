@@ -128,6 +128,11 @@ namespace IngSorre97.RenderHell.Brush3D
             m_material.SetFloat(RenderHellShaderIDs.DrawingRimPower, rimPower);
         }
 
+        public void SetErasingDrawnActivation(bool active)
+        {
+            m_computeShader.SetFloat(RenderHellShaderIDs.ErasingDrawn, active.ToBinaryFloat());
+        }
+
         public void ResetDrawnRegion()
         {
             int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);

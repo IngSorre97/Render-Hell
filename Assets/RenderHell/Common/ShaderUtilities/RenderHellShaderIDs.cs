@@ -19,5 +19,6 @@ namespace IngSorre97.RenderHell
         public static int DrawingRimPower { get; } = Shader.PropertyToID("_DrawingRimPower");
         public static int OutlineColor { get; } = Shader.PropertyToID("_OutlineColor");
         public static int OutlineThickness { get; } = Shader.PropertyToID("_OutlineThickness");
+        public static int ErasingDrawn { get; } = Shader.PropertyToID("_ErasingDrawn");
     }
 }
