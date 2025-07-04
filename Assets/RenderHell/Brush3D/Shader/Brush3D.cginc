@@ -20,6 +20,9 @@ TEXTURE3D(_SelectionMask);
 SAMPLER(sampler_SelectionMask);
 int _SelectionMaskSize;
 
+float4 _IntersectingColor;
+float4 _DrawingColor;
+
 float3 ComputeBrush3DNormalizedUV(float3 objPos)
 {
     return (objPos - _BoundsMin) / (_BoundsMax - _BoundsMin);
@@ -35,14 +38,12 @@ float4 ComputeBrush3DColor(float3 normalizedUV, float storedValue)
     clip(storedValue);
     
     float4 noColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    float4 drawColor = float4(0.0f, 0.0f, 1.0f, 1.0f);
-    float4 intersectingColor = float4(1.0f, 0.0f, 0.0f, 1.0f);
     
     float isVoxelDrawn = when_eq(storedValue, 1.0f);
     
     float isInsideCursorSphere = IsInsideSphere(normalizedUV, _CursorNormalizedPos, _CursorNormalizedRadius);
-    float4 newColor = lerp(noColor, drawColor, isVoxelDrawn);
-    newColor = lerp(newColor, intersectingColor, isInsideCursorSphere);
+    float4 newColor = lerp(noColor, _DrawingColor, isVoxelDrawn);
+    newColor = lerp(newColor, _IntersectingColor, isInsideCursorSphere);
     
     return newColor;
 }
