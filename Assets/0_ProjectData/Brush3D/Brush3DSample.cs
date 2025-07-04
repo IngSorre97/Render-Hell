@@ -4,6 +4,7 @@ using IngSorre97.RenderHell.Brush3D;
 using Microsoft.MixedReality.Toolkit.Utilities;
 using UnityEngine;
 using UnityEngine.Serialization;
+// ReSharper disable InvertIf
 
 namespace IngSorre97.RenderHell.Samples
 {
@@ -31,13 +32,19 @@ namespace IngSorre97.RenderHell.Samples
         [Space]
         [Header("Update")]
         [SerializeField] bool m_updateLoop;
-        [SerializeField] bool m_updateOnce;
-
+        [SerializeField] bool m_update;
+        [SerializeField] bool m_resetDrawnRegion;
+        [SerializeField] bool m_clipDrawnRegion;
+        [SerializeField] bool m_resetClippedRegion;
+        
         IBrush3D m_brush3D;
         
         void Start()
         {
-            m_updateOnce = false;
+            m_update = false;
+            m_resetDrawnRegion = false;
+            m_clipDrawnRegion = false;
+            m_resetClippedRegion = false;
             
             m_brush3D = RenderHellAPI.CreateBrush3D(m_meshRenderer, m_meshFilter);
             UpdateBrush3D();
@@ -47,11 +54,11 @@ namespace IngSorre97.RenderHell.Samples
         {
             UpdateCursorPosition();
 
-            if (!m_updateOnce && !m_updateLoop)
+            if (!m_update && !m_updateLoop)
             {
                 return;
             }
-            m_updateOnce = false;
+            m_update = false;
             
             UpdateBrush3D();
         }
@@ -67,6 +74,24 @@ namespace IngSorre97.RenderHell.Samples
             m_brush3D.SetOutlineThickness(m_outlineThickness);
             m_brush3D.SetOutlineColor(m_outlineColor);
             m_brush3D.SetDrawingColor(m_drawingColor, m_drawingRimPower);
+            
+            if (m_resetDrawnRegion)
+            {
+                m_brush3D.ResetDrawnRegion();
+                m_resetDrawnRegion = false;
+            }
+            
+            if (m_clipDrawnRegion)
+            {
+                m_brush3D.ClipDrawnRegion();
+                m_clipDrawnRegion = false;
+            }
+            
+            if (m_resetClippedRegion)
+            {
+                m_brush3D.ResetClippedRegion();
+                m_resetClippedRegion = false;
+            }
         }
 
         void UpdateCursorPosition()
