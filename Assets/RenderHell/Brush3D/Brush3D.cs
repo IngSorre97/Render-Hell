@@ -8,9 +8,6 @@ namespace IngSorre97.RenderHell.Brush3D
         
         [SerializeField] ComputeShader m_computeShader;
 
-        public float Radius => m_renderPass.Radius;
-        public float OutlineThickness => m_renderPass.OutlineThickness;
-
         MeshRenderer m_meshRenderer;
         Bounds m_bounds;
         Brush3DRenderPass m_renderPass;
