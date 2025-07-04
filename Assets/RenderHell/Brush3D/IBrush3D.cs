@@ -20,6 +20,8 @@ namespace IngSorre97.RenderHell.Brush3D
         
         void SetDrawingColor(Color color, float rimPower);
         
+        void SetErasingDrawnActivation(bool active);
+        
         void ResetDrawnRegion();
         
         void SetClippingActivation(bool active);

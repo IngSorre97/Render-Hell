@@ -1,26 +1,80 @@
 // ReSharper disable CppInconsistentNaming
 #pragma kernel UpdateMask
+#pragma kernel ResetDrawnRegion
+#pragma kernel ClipDrawnRegion
+#pragma kernel ResetClippedRegion
 
 #pragma enable_d3d11_debug_symbols
 
 #include "Assets/RenderHell/Common/ShaderUtilities/ShaderUtilities.cginc"
 
 RWTexture3D<float> _SelectionMask;
+int _SelectionMaskSize;
 
-float3 _CursorObjPos;
-float _CursorRadius;
+float3 _CursorNormalizedPos;
+float _CursorNormalizedRadius;
 
 float _Intersecting;
+float _Drawing;
+float _Clipping;
+float _ErasingDrawn;
 
 [numthreads(8,8,8)]
 void UpdateMask (uint3 id : SV_DispatchThreadID)
 {
-    if (ClipId(id) || ClipId(_CursorObjPos) || when_eq(0.0f, _Intersecting))
+    if (ClipId(id, _SelectionMaskSize, _SelectionMaskSize, _SelectionMaskSize) || when_eq(0.0f, _Intersecting))
     {
         return;
     }
+    
+    float storedValue = _SelectionMask[id];
+    float isVoxelClipped = when_eq(storedValue, -1.0f);
 
-    float isInsideCursorSphere = IsInsideSphere(id, _CursorObjPos, _CursorRadius);
-    float maskedValue = _SelectionMask[id];
-    _SelectionMask[id] = lerp(maskedValue, 1.0f, isInsideCursorSphere);
+    float newValue = lerp(0.0f, 1.0f, _Drawing);
+    newValue = lerp(newValue, -1.0f, _Clipping);
+    newValue = lerp(newValue, -1.0f, isVoxelClipped);
+    newValue = lerp(newValue, -1.0f, and(when_eq(storedValue, 1.0f), _ErasingDrawn));
+
+    float3 normalizedPos = float3(id.x / (float) _SelectionMaskSize, id.y / (float) _SelectionMaskSize, id.z / (float) _SelectionMaskSize);
+    float isInsideCursorSphere = IsInsideSphere(normalizedPos, _CursorNormalizedPos, _CursorNormalizedRadius);
+    _SelectionMask[id] = lerp(storedValue, newValue, isInsideCursorSphere);
+}
+
+[numthreads(8,8,8)]
+void ResetDrawnRegion (uint3 id : SV_DispatchThreadID)
+{
+    if (ClipId(id, _SelectionMaskSize, _SelectionMaskSize, _SelectionMaskSize))
+    {
+        return;
+    }
+    
+    float storedValue = _SelectionMask[id];
+    float isStoredValueDrawn = when_eq(storedValue, 1.0f);
+    _SelectionMask[id] = lerp(storedValue, 0.0f, isStoredValueDrawn);
+}
+
+[numthreads(8,8,8)]
+void ClipDrawnRegion (uint3 id : SV_DispatchThreadID)
+{
+    if (ClipId(id, _SelectionMaskSize, _SelectionMaskSize, _SelectionMaskSize))
+    {
+        return;
+    }
+    
+    float storedValue = _SelectionMask[id];
+    float isStoredValueDrawn = when_eq(storedValue, 1.0f);
+    _SelectionMask[id] = lerp(storedValue, -1.0f, isStoredValueDrawn);
+}
+
+[numthreads(8,8,8)]
+void ResetClippedRegion (uint3 id : SV_DispatchThreadID)
+{
+    if (ClipId(id, _SelectionMaskSize, _SelectionMaskSize, _SelectionMaskSize))
+    {
+        return;
+    }
+    
+    float storedValue = _SelectionMask[id];
+    float isStoredValueClipped = when_eq(storedValue, -1.0f);
+    _SelectionMask[id] = lerp(storedValue, 0.0f, isStoredValueClipped);
 }
