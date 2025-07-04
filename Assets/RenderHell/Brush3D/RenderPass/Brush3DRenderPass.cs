@@ -7,32 +7,41 @@ using Object = UnityEngine.Object;
 
 namespace IngSorre97.RenderHell.Brush3D
 {
-    class Brush3DRenderPass : BaseRenderPass, IBrush3DRenderPass
+    class Brush3DRenderPass : BaseRenderPass, IBrush3D
     {
         const RenderPassEvent RENDER_PASS_EVENT = RenderPassEvent.AfterRenderingTransparents;
-        const int SELECTION_MASK_SIZE = 256;
 
         readonly MeshRenderer m_meshRenderer;
+        readonly Bounds m_bounds;
+        readonly float m_boundsExtent;
+        readonly int m_selectionMaskSize;
         readonly Material m_material;
         
         readonly ComputeShader m_computeShader;
         readonly int m_selectionMaskKernel;
 
-        Vector3 m_boundsMin;
-        Vector3 m_boundsMax;
+        bool m_intersectionActive;
+        bool m_drawingActive;
+        bool m_clippingActive;
 
-        bool m_active;
-
-        public Brush3DRenderPass(MeshRenderer meshRenderer, MeshFilter meshFilter, ComputeShader computeShader)
+        public Brush3DRenderPass(MeshRenderer meshRenderer, Bounds bounds, ComputeShader computeShader, int selectionMaskSize)
             : base("Brush3DPass", RENDER_PASS_EVENT, Camera.main)
         {
             m_meshRenderer = meshRenderer;
+            m_bounds = bounds;
+            m_boundsExtent = Mathf.Max(m_bounds.extents.x, m_bounds.extents.y, m_bounds.extents.z);
+            m_selectionMaskSize = selectionMaskSize;
             m_material = Object.Instantiate(meshRenderer.material);
             m_computeShader = Object.Instantiate(computeShader);
             m_selectionMaskKernel = m_computeShader.FindKernel("UpdateMask");
             
-            SetTexture3D(SELECTION_MASK_SIZE);
-            SetBounds(meshFilter);
+            SetTexture3D(selectionMaskSize);
+            
+            m_material.SetVector(RenderHellShaderIDs.BoundsMin, m_bounds.min);
+            m_material.SetVector(RenderHellShaderIDs.BoundsMax, m_bounds.max);
+            
+            m_computeShader.SetInt(RenderHellShaderIDs.SelectionMaskSize, selectionMaskSize);
+            m_material.SetInt(RenderHellShaderIDs.SelectionMaskSize, selectionMaskSize);
             
             meshRenderer.materials = Array.Empty<Material>();
         }
@@ -49,43 +58,79 @@ namespace IngSorre97.RenderHell.Brush3D
         {
             return true;
         }
-
-        public void SetActive(bool active)
-        {
-            m_active = active;
-            
-            m_computeShader.SetFloat(RenderHellShaderIDs.Intersecting, active ?  1.0f : 0.0f);
-            m_material.SetFloat(RenderHellShaderIDs.Intersecting, active ?  1.0f : 0.0f);
-        }
         
         public void SetPosition(Vector3 pos)
         {
-            if (!m_meshRenderer.bounds.Contains(pos)) //TODO works only if inside
-            {
-                m_computeShader.SetVector(RenderHellShaderIDs.CursorObjPos, -1.0f * Vector3.one);
-                return;
-            }
-            
-            Vector3 localPos = m_meshRenderer.transform.InverseTransformPoint(pos);
-            var normalizedPos = new Vector3(
-                (localPos.x - m_boundsMin.x) / (m_boundsMax.x - m_boundsMin.x),
-                (localPos.y - m_boundsMin.y) / (m_boundsMax.y - m_boundsMin.y),
-                (localPos.z - m_boundsMin.z) / (m_boundsMax.z - m_boundsMin.z)
-            );
-            
-            normalizedPos *= SELECTION_MASK_SIZE;
-            
-            m_computeShader.SetVector(RenderHellShaderIDs.CursorObjPos, normalizedPos);
+            m_computeShader.SetVector(RenderHellShaderIDs.CursorNormalizedPos, pos);
+            m_material.SetVector(RenderHellShaderIDs.CursorNormalizedPos, pos);
         }
         
         public void SetRadius(float radius)
         {
-            m_computeShader.SetFloat(RenderHellShaderIDs.CursorRadius, radius);
+            float normalizedRadius = Mathf.Clamp01(radius / m_boundsExtent);
+            m_computeShader.SetFloat(RenderHellShaderIDs.CursorNormalizedRadius, normalizedRadius);
+            m_material.SetFloat(RenderHellShaderIDs.CursorNormalizedRadius, normalizedRadius);
         }
-        
+
+        public void SetIntersectionActivation(bool active)
+        {
+            m_intersectionActive = active;
+            
+            m_computeShader.SetFloat(RenderHellShaderIDs.Intersecting, m_intersectionActive.ToBinaryFloat());
+        }
+
+        public void SetIntersectionColor(Color color, float rimPower)
+        {
+            
+        }
+
+        public void SetOutlineColor(Color color)
+        {
+            
+        }
+
+        public void SetOutlineThickness(float thickness)
+        {
+            
+        }
+
+        public void SetDrawingActivation(bool active)
+        {
+            m_drawingActive = active;
+            
+            m_computeShader.SetFloat(RenderHellShaderIDs.Drawing, m_drawingActive.ToBinaryFloat());
+        }
+
+        public void SetDrawingColor(Color color, float rimPower)
+        {
+            
+        }
+
+        public void ResetDrawnRegion()
+        {
+            
+        }
+
+        public void SetClippingActivation(bool active)
+        {
+            m_clippingActive = active;
+            
+            m_computeShader.SetFloat(RenderHellShaderIDs.Clipping, m_clippingActive.ToBinaryFloat());
+        }
+
+        public void ClipDrawnRegion()
+        {
+            
+        }
+
+        public void ResetClippedRegion()
+        {
+            
+        }
+
         void SetTexture3D(int size)
         {
-            var selectionMask = new RenderTexture(size, size, GraphicsFormat.R8_UNorm, 0)
+            var selectionMask = new RenderTexture(size, size, GraphicsFormat.R32_SFloat, 0)
             {
                 name = "SelectionMask",
                 filterMode = FilterMode.Trilinear,
@@ -95,27 +140,19 @@ namespace IngSorre97.RenderHell.Brush3D
                 enableRandomWrite = true,
                 isPowerOfTwo = true
             };
+            selectionMask.Create();
+            selectionMask.name = "SelectionMask";
             
             m_computeShader.SetTexture(m_selectionMaskKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
             m_material.SetTexture(RenderHellShaderIDs.SelectionMask, selectionMask);
             
             m_computeShader.SetFloat(RenderHellShaderIDs.SelectionMaskSize, size);
-        }
-
-        void SetBounds(MeshFilter meshFilter)
-        {
-            Bounds bounds = meshFilter.sharedMesh.bounds;
-            
-            m_boundsMin = bounds.min;
-            m_material.SetVector(RenderHellShaderIDs.BoundsMin, m_boundsMin);
-            
-            m_boundsMax = bounds.max;
-            m_material.SetVector(RenderHellShaderIDs.BoundsMax, m_boundsMax);
+            m_material.SetFloat(RenderHellShaderIDs.SelectionMaskSize, size);
         }
 
         protected override void OnPassExecute(CommandBuffer commandBuffer, ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            int threadGroup = Mathf.CeilToInt((float) SELECTION_MASK_SIZE / 8);
+            int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
             
             commandBuffer.DispatchCompute(m_computeShader, m_selectionMaskKernel, threadGroup, threadGroup, threadGroup);
             commandBuffer.DrawRenderer(m_meshRenderer, m_material);
