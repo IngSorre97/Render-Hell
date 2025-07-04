@@ -34,7 +34,7 @@ void UpdateMask (uint3 id : SV_DispatchThreadID)
     float4 newColor = lerp(_NoColor, _DrawingColor, _Drawing);
     newColor = lerp(newColor, _ClippedColor, _Clipping);
     newColor = lerp(newColor, _ClippedColor, IsClippedColor(storedColor));
-    newColor = lerp(newColor, _ClippedColor, and(IsDrawnColor(storedColor), _ErasingDrawn));
+    newColor = lerp(newColor, _NoColor, and(IsDrawnColor(storedColor), _ErasingDrawn));
 
     float3 normalizedPos = float3(id.x / (float) _SelectionMaskSize, id.y / (float) _SelectionMaskSize, id.z / (float) _SelectionMaskSize);
     float isInsideCursorSphere = IsInsideSphere(normalizedPos, _CursorNormalizedPos, _CursorNormalizedRadius);
