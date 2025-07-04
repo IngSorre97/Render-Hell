@@ -126,6 +126,8 @@ namespace IngSorre97.RenderHell.Brush3D
         {
             m_material.SetColor(RenderHellShaderIDs.DrawingColor, color);
             m_material.SetFloat(RenderHellShaderIDs.DrawingRimPower, rimPower);
+            
+            m_computeShader.SetVector(RenderHellShaderIDs.DrawingColor, color);
         }
 
         public void SetErasingDrawnActivation(bool active)
@@ -163,9 +165,10 @@ namespace IngSorre97.RenderHell.Brush3D
 
         void SetTexture3D(int size)
         {
-            var selectionMask = new RenderTexture(size, size, GraphicsFormat.R32_SFloat, 0)
+            var selectionMask = new RenderTexture(size, size, GraphicsFormat.R32G32B32A32_SFloat, 0)
             {
                 name = "SelectionMask",
+                format = RenderTextureFormat.ARGBFloat,
                 filterMode = FilterMode.Trilinear,
                 wrapMode = TextureWrapMode.Clamp,
                 dimension = TextureDimension.Tex3D,
