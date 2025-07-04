@@ -790,7 +790,7 @@ MonoBehaviour:
   m_intersecting: 1
   m_drawing: 0
   m_clipping: 0
-  m_radius: 10
+  m_radius: 15
   m_intersectionRimPower: 3
   m_intersectionColor: {r: 0.6226415, g: 0.20852618, b: 0.20852618, a: 0}
   m_outlineThickness: 0.5
@@ -798,7 +798,10 @@ MonoBehaviour:
   m_drawingRimPower: 2
   m_drawingColor: {r: 0.18160376, g: 0.20667432, b: 0.5, a: 0}
   m_updateLoop: 1
-  m_updateOnce: 0
+  m_update: 0
+  m_resetDrawnRegion: 0
+  m_clipDrawnRegion: 0
+  m_resetClippedRegion: 0
 --- !u!4 &461632367
 Transform:
   m_ObjectHideFlags: 0

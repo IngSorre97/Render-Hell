@@ -15,13 +15,16 @@ namespace IngSorre97.RenderHell.Brush3D
         public float OutlineThickness { get; private set; }
         
         readonly MeshRenderer m_meshRenderer;
-        readonly Bounds m_bounds;
         readonly float m_boundsExtent;
         readonly int m_selectionMaskSize;
         readonly Material m_material;
         
         readonly ComputeShader m_computeShader;
-        readonly int m_selectionMaskKernel;
+        readonly int m_updateMaskKernel;
+        readonly int m_resetDrawnRegionKernel;
+        readonly int m_clipDrawnRegionKernel;
+        readonly int m_resetClippedRegionKernel;
+
 
         bool m_intersectionActive;
         bool m_drawingActive;
@@ -31,20 +34,20 @@ namespace IngSorre97.RenderHell.Brush3D
             : base("Brush3DPass", RENDER_PASS_EVENT, Camera.main)
         {
             m_meshRenderer = meshRenderer;
-            m_bounds = bounds;
-            m_boundsExtent = Mathf.Max(m_bounds.extents.x, m_bounds.extents.y, m_bounds.extents.z);
+            m_boundsExtent = Mathf.Max(bounds.extents.x, bounds.extents.y, bounds.extents.z);
             m_selectionMaskSize = selectionMaskSize;
             m_material = Object.Instantiate(meshRenderer.material);
             m_computeShader = Object.Instantiate(computeShader);
-            m_selectionMaskKernel = m_computeShader.FindKernel("UpdateMask");
+            
+            m_updateMaskKernel = m_computeShader.FindKernel("UpdateMask");
+            m_resetDrawnRegionKernel = m_computeShader.FindKernel("ResetDrawnRegion");
+            m_clipDrawnRegionKernel = m_computeShader.FindKernel("ClipDrawnRegion");
+            m_resetClippedRegionKernel = m_computeShader.FindKernel("ResetClippedRegion");
             
             SetTexture3D(selectionMaskSize);
             
-            m_material.SetVector(RenderHellShaderIDs.BoundsMin, m_bounds.min);
-            m_material.SetVector(RenderHellShaderIDs.BoundsMax, m_bounds.max);
-            
-            m_computeShader.SetInt(RenderHellShaderIDs.SelectionMaskSize, selectionMaskSize);
-            m_material.SetInt(RenderHellShaderIDs.SelectionMaskSize, selectionMaskSize);
+            m_material.SetVector(RenderHellShaderIDs.BoundsMin, bounds.min);
+            m_material.SetVector(RenderHellShaderIDs.BoundsMax, bounds.max);
             
             meshRenderer.materials = Array.Empty<Material>();
         }
@@ -130,7 +133,9 @@ namespace IngSorre97.RenderHell.Brush3D
 
         public void ResetDrawnRegion()
         {
+            int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
             
+            m_computeShader.Dispatch(m_resetDrawnRegionKernel, threadGroup, threadGroup, threadGroup);
         }
 
         public void SetClippingActivation(bool active)
@@ -142,12 +147,16 @@ namespace IngSorre97.RenderHell.Brush3D
 
         public void ClipDrawnRegion()
         {
+            int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
             
+            m_computeShader.Dispatch(m_clipDrawnRegionKernel, threadGroup, threadGroup, threadGroup);
         }
 
         public void ResetClippedRegion()
         {
+            int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
             
+            m_computeShader.Dispatch(m_resetClippedRegionKernel, threadGroup, threadGroup, threadGroup);
         }
 
         void SetTexture3D(int size)
@@ -165,11 +174,14 @@ namespace IngSorre97.RenderHell.Brush3D
             selectionMask.Create();
             selectionMask.name = "SelectionMask";
             
-            m_computeShader.SetTexture(m_selectionMaskKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
+            m_computeShader.SetTexture(m_updateMaskKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
+            m_computeShader.SetTexture(m_resetDrawnRegionKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
+            m_computeShader.SetTexture(m_clipDrawnRegionKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
+            m_computeShader.SetTexture(m_resetClippedRegionKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
             m_material.SetTexture(RenderHellShaderIDs.SelectionMask, selectionMask);
             
-            m_computeShader.SetFloat(RenderHellShaderIDs.SelectionMaskSize, size);
-            m_material.SetFloat(RenderHellShaderIDs.SelectionMaskSize, size);
+            m_computeShader.SetInt(RenderHellShaderIDs.SelectionMaskSize, size);
+            m_material.SetInt(RenderHellShaderIDs.SelectionMaskSize, size);
         }
 
         float NormalizeLengthInBoundsExtent(float length)
@@ -181,7 +193,7 @@ namespace IngSorre97.RenderHell.Brush3D
         {
             int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
             
-            commandBuffer.DispatchCompute(m_computeShader, m_selectionMaskKernel, threadGroup, threadGroup, threadGroup);
+            commandBuffer.DispatchCompute(m_computeShader, m_updateMaskKernel, threadGroup, threadGroup, threadGroup);
             commandBuffer.DrawRenderer(m_meshRenderer, m_material);
         }
     }
