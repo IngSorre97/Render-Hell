@@ -14,6 +14,8 @@ namespace IngSorre97.RenderHell
         public static int Drawing { get; } = Shader.PropertyToID("_Drawing");
         public static int Clipping { get; } = Shader.PropertyToID("_Clipping");
         public static int IntersectingColor { get; } = Shader.PropertyToID("_IntersectingColor");
+        public static int IntersectingRimPower { get; } = Shader.PropertyToID("_IntersectingRimPower");
         public static int DrawingColor { get; } = Shader.PropertyToID("_DrawingColor");
+        public static int DrawingRimPower { get; } = Shader.PropertyToID("_DrawingRimPower");
     }
 }

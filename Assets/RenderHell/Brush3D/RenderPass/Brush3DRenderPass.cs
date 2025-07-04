@@ -82,6 +82,7 @@ namespace IngSorre97.RenderHell.Brush3D
         public void SetIntersectionColor(Color color, float rimPower)
         {
             m_material.SetColor(RenderHellShaderIDs.IntersectingColor, color);
+            m_material.SetFloat(RenderHellShaderIDs.IntersectingRimPower, rimPower);
         }
 
         public void SetOutlineColor(Color color)
@@ -104,6 +105,7 @@ namespace IngSorre97.RenderHell.Brush3D
         public void SetDrawingColor(Color color, float rimPower)
         {
             m_material.SetColor(RenderHellShaderIDs.DrawingColor, color);
+            m_material.SetFloat(RenderHellShaderIDs.DrawingRimPower, rimPower);
         }
 
         public void ResetDrawnRegion()
