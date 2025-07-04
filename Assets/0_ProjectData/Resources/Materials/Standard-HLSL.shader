@@ -776,6 +776,11 @@ Shader "UX/Standard-HLSL"
                 UNITY_SETUP_INSTANCE_ID(i);
 
                 float brush3DStoredValue = GetBrush3DStoredValue(i.brush3DNormalizedUV);
+                float brush3DIsInsideSphere = IsInsideCursorSphere(i.brush3DNormalizedUV);
+                
+#if defined(_RIM_LIGHT)
+                _RimPower = ComputeBrush3DRimPower(_RimPower, brush3DStoredValue, brush3DIsInsideSphere);
+#endif
                 
 #if defined(_TRIPLANAR_MAPPING)
                 // Calculate triplanar uvs and apply texture scale and offset values like TRANSFORM_TEX.
@@ -907,7 +912,7 @@ Shader "UX/Standard-HLSL"
 #endif
 
                 albedo *= UNITY_ACCESS_INSTANCED_PROP(Props, _Color);
-                albedo += ComputeBrush3DColor(i.brush3DNormalizedUV, brush3DStoredValue);
+                albedo += ComputeBrush3DColor(brush3DStoredValue, brush3DIsInsideSphere);
 
 #if defined(_VERTEX_COLORS)
                 albedo *= i.color;

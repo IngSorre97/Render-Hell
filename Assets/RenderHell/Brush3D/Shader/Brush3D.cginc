@@ -21,7 +21,10 @@ SAMPLER(sampler_SelectionMask);
 int _SelectionMaskSize;
 
 float4 _IntersectingColor;
+float _IntersectingRimPower;
+
 float4 _DrawingColor;
+float _DrawingRimPower;
 
 float3 ComputeBrush3DNormalizedUV(float3 objPos)
 {
@@ -33,27 +36,33 @@ float GetBrush3DStoredValue(float3 normalizedUV)
     return SAMPLE_TEXTURE3D(_SelectionMask, sampler_SelectionMask, normalizedUV);
 }
 
-float4 ComputeBrush3DColor(float3 normalizedUV, float storedValue)
+float IsInsideCursorSphere(float3 normalizedUV)
+{
+    return IsInsideSphere(normalizedUV, _CursorNormalizedPos, _CursorNormalizedRadius);
+}
+
+float4 ComputeBrush3DColor(float storedValue, float isInsideCursorSphere)
 {
     clip(storedValue);
     
-    float4 noColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    
     float isVoxelDrawn = when_eq(storedValue, 1.0f);
     
-    float isInsideCursorSphere = IsInsideSphere(normalizedUV, _CursorNormalizedPos, _CursorNormalizedRadius);
-    float4 newColor = lerp(noColor, _DrawingColor, isVoxelDrawn);
+    float4 newColor = lerp(float4(0.0f, 0.0f, 0.0f, 0.0f), _DrawingColor, isVoxelDrawn);
     newColor = lerp(newColor, _IntersectingColor, isInsideCursorSphere);
     
     return newColor;
 }
 
-float ComputeBrush3DRimPower(float brush3DValue)
+float ComputeBrush3DRimPower(float rimPower, float storedValue, float isInsideCursorSphere)
 {
-    float4 drawColor = float4(0.0f, 0.0f, 1.0f, 0.0f);
-    float4 previewColor = float4(1.0f, 0.0f, 0.0f, 0.0f);
+    clip(storedValue);
 
-    return 0.0f;
+    float isVoxelDrawn = when_eq(storedValue, 1.0f);
+    
+    float newRimPower = lerp(0.0f, _DrawingRimPower, isVoxelDrawn);
+    newRimPower = lerp(newRimPower, _IntersectingRimPower, isInsideCursorSphere);
+
+    return lerp(rimPower, newRimPower, or(isVoxelDrawn, isInsideCursorSphere));
 }
 
 #endif // __BRUSH3D__
