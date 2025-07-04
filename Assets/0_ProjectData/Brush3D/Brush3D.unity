@@ -792,11 +792,11 @@ MonoBehaviour:
   m_clipping: 0
   m_radius: 10
   m_intersectionRimPower: 3
-  m_intersectionColor: {r: 0.8207547, g: 0.35230508, b: 0.35230508, a: 0}
-  m_outlineThickness: 0
-  m_outlineColor: {r: 0, g: 0, b: 0, a: 0}
+  m_intersectionColor: {r: 0.6226415, g: 0.20852618, b: 0.20852618, a: 0}
+  m_outlineThickness: 0.5
+  m_outlineColor: {r: 0.8018868, g: 0.8018868, b: 0.8018868, a: 0}
   m_drawingRimPower: 2
-  m_drawingColor: {r: 0.2953008, g: 0.33265775, b: 0.7924528, a: 0}
+  m_drawingColor: {r: 0.18160376, g: 0.20667432, b: 0.5, a: 0}
   m_updateLoop: 1
   m_updateOnce: 0
 --- !u!4 &461632367

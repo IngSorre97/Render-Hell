@@ -26,6 +26,9 @@ float _IntersectingRimPower;
 float4 _DrawingColor;
 float _DrawingRimPower;
 
+float4 _OutlineColor;
+float _OutlineThickness;
+
 float3 ComputeBrush3DNormalizedUV(float3 objPos)
 {
     return (objPos - _BoundsMin) / (_BoundsMax - _BoundsMin);
@@ -41,7 +44,12 @@ float IsInsideCursorSphere(float3 normalizedUV)
     return IsInsideSphere(normalizedUV, _CursorNormalizedPos, _CursorNormalizedRadius);
 }
 
-float4 ComputeBrush3DColor(float storedValue, float isInsideCursorSphere)
+float IsInsideCursorOutline(float3 normalizedUV, float isInsideCursorSphere)
+{
+    return and(isInsideCursorSphere, not(IsInsideSphere(normalizedUV, _CursorNormalizedPos, _CursorNormalizedRadius - _OutlineThickness)));
+}
+
+float4 ComputeBrush3DColor(float storedValue, float isInsideCursorSphere, float isInsideCursorOutline)
 {
     clip(storedValue);
     
@@ -49,6 +57,7 @@ float4 ComputeBrush3DColor(float storedValue, float isInsideCursorSphere)
     
     float4 newColor = lerp(float4(0.0f, 0.0f, 0.0f, 0.0f), _DrawingColor, isVoxelDrawn);
     newColor = lerp(newColor, _IntersectingColor, isInsideCursorSphere);
+    newColor = lerp(newColor, _OutlineColor, isInsideCursorOutline);
     
     return newColor;
 }
