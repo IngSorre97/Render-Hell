@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -9,15 +8,15 @@ namespace IngSorre97.RenderHell.Brush3D
 {
     class Brush3DRenderPass : BaseRenderPass, IBrush3D
     {
-        const RenderPassEvent RENDER_PASS_EVENT = RenderPassEvent.AfterRenderingTransparents;
+        const RenderPassEvent RENDER_PASS_EVENT = RenderPassEvent.BeforeRenderingTransparents;
 
         public float Radius { get; private set; }
         public float OutlineThickness { get; private set; }
         
-        readonly MeshRenderer m_meshRenderer;
-        readonly float m_boundsExtent;
-        readonly int m_selectionMaskSize;
         readonly Material m_material;
+        readonly float m_boundsExtent;
+        readonly MeshRenderer m_meshRenderer;
+        readonly int m_selectionMaskSize;
         
         readonly ComputeShader m_computeShader;
         readonly int m_updateMaskKernel;
@@ -35,28 +34,26 @@ namespace IngSorre97.RenderHell.Brush3D
         {
             m_meshRenderer = meshRenderer;
             m_boundsExtent = Mathf.Max(bounds.extents.x, bounds.extents.y, bounds.extents.z);
-            m_selectionMaskSize = selectionMaskSize;
-            m_material = Object.Instantiate(meshRenderer.material);
             m_computeShader = Object.Instantiate(computeShader);
+            m_selectionMaskSize = selectionMaskSize;
             
             m_updateMaskKernel = m_computeShader.FindKernel("UpdateMask");
             m_resetDrawnRegionKernel = m_computeShader.FindKernel("ResetDrawnRegion");
             m_clipDrawnRegionKernel = m_computeShader.FindKernel("ClipDrawnRegion");
             m_resetClippedRegionKernel = m_computeShader.FindKernel("ResetClippedRegion");
+
+            m_material = m_meshRenderer.material;
             
             SetTexture3D(selectionMaskSize);
             
             m_material.SetVector(RenderHellShaderIDs.BoundsMin, bounds.min);
             m_material.SetVector(RenderHellShaderIDs.BoundsMax, bounds.max);
-            
-            meshRenderer.materials = Array.Empty<Material>();
         }
 
         public override void Dispose()
         {
             base.Dispose();
             
-            Object.Destroy(m_material);
             Object.Destroy(m_computeShader);
         }
         
@@ -194,7 +191,6 @@ namespace IngSorre97.RenderHell.Brush3D
             int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
             
             commandBuffer.DispatchCompute(m_computeShader, m_updateMaskKernel, threadGroup, threadGroup, threadGroup);
-            commandBuffer.DrawRenderer(m_meshRenderer, m_material);
         }
     }
 }

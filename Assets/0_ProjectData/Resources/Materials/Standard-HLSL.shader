@@ -112,12 +112,11 @@ Shader "UX/Standard-HLSL"
         Pass
         {
             Name "Main"
-            Tags{ "RenderType" = "Opaque" "LightMode" = "UniversalForward" "RenderPipeline" = "UniversalPipeline" }
+            Tags{ "Queue" = "Transparent" "RenderType" = "Transparent" "RenderPipeline" = "UniversalPipeline" }
             LOD 100
-            Blend[_SrcBlend][_DstBlend]
-            BlendOp[_BlendOp]
-            ZTest[_ZTest]
-            ZWrite[_ZWrite]
+            Blend One OneMinusSrcAlpha
+            ZTest Always
+            ZWrite Off
             Cull[_CullMode]
             Offset[_ZOffsetFactor],[_ZOffsetUnits]
             ColorMask[_ColorWriteMask]

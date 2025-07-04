@@ -11,11 +11,9 @@ namespace IngSorre97.RenderHell.Brush3D
         public float Radius => m_renderPass.Radius;
         public float OutlineThickness => m_renderPass.OutlineThickness;
 
-        Brush3DRenderPass m_renderPass;
-        
         MeshRenderer m_meshRenderer;
-
         Bounds m_bounds;
+        Brush3DRenderPass m_renderPass;
         
         void OnDestroy()
         {
@@ -26,6 +24,7 @@ namespace IngSorre97.RenderHell.Brush3D
         {
             m_meshRenderer = meshRenderer;
             m_bounds = bounds;
+            
             m_renderPass = new Brush3DRenderPass(meshRenderer, m_bounds, m_computeShader, SELECTION_MASK_SIZE);
         }
 
