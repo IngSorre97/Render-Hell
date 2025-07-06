@@ -21,5 +21,8 @@ namespace IngSorre97.RenderHell
         public static int OutlineColor { get; } = Shader.PropertyToID("_OutlineColor");
         public static int OutlineThickness { get; } = Shader.PropertyToID("_OutlineThickness");
         public static int ErasingDrawn { get; } = Shader.PropertyToID("_ErasingDrawn");
+        public static int MeshVertices { get; } = Shader.PropertyToID("_MeshVertices");
+        public static int MeshVerticesCount { get; } = Shader.PropertyToID("_MeshVerticesCount");
+        public static int MeshVerticesChecks { get; } = Shader.PropertyToID("_MeshVerticesChecks");
     }
 }

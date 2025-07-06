@@ -140,11 +140,10 @@ namespace IngSorre97.RenderHell.Brush3D
         {
             m_renderPass.ResetClippedRegion();
         }
-        
-        float NormalizeLengthInBoundsExtent(float length)
+
+        public GameObject ExtrapolateDrawnRegion()
         {
-            float boundsExtent = Mathf.Max(m_mesh.bounds.extents.x, m_mesh.bounds.extents.y, m_mesh.bounds.extents.z);
-            return length / (boundsExtent * m_meshRenderer.transform.lossyScale.x);
+            return m_renderPass.ExtrapolateDrawnRegion();
         }
     }
 }

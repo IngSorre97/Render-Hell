@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -23,7 +24,7 @@ namespace IngSorre97.RenderHell.Brush3D
         bool m_drawingActive;
         bool m_clippingActive;
 
-        public Brush3DRenderPass(MeshRenderer meshRenderer, Bounds bounds, ComputeShader computeShader, int selectionMaskSize)
+        public Brush3DRenderPass(MeshRenderer meshRenderer, Mesh mesh, ComputeShader computeShader, int selectionMaskSize)
             : base("Brush3DPass", RENDER_PASS_EVENT, Camera.main)
         {
             m_computeShader = Object.Instantiate(computeShader);
@@ -138,9 +139,14 @@ namespace IngSorre97.RenderHell.Brush3D
             m_computeShader.Dispatch(m_resetClippedRegionKernel, threadGroup, threadGroup, threadGroup);
         }
 
+        public GameObject ExtrapolateDrawnRegion()
+        {
+            return ExtrapolateDrawnRegionJob.Execute(m_computeShader, m_mesh);
+        }
+
         void SetTexture3D(int size)
         {
-            var selectionMask = new RenderTexture(size, size, GraphicsFormat.R32G32B32A32_SFloat, 0)
+            m_selectionMask = new RenderTexture(size, size, GraphicsFormat.R32G32B32A32_SFloat, 0)
             {
                 name = "SelectionMask",
                 format = RenderTextureFormat.ARGBFloat,
@@ -151,14 +157,14 @@ namespace IngSorre97.RenderHell.Brush3D
                 enableRandomWrite = true,
                 isPowerOfTwo = true
             };
-            selectionMask.Create();
-            selectionMask.name = "SelectionMask";
+            m_selectionMask.Create();
+            m_selectionMask.name = "SelectionMask";
             
-            m_computeShader.SetTexture(m_updateMaskKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
-            m_computeShader.SetTexture(m_resetDrawnRegionKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
-            m_computeShader.SetTexture(m_clipDrawnRegionKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
-            m_computeShader.SetTexture(m_resetClippedRegionKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
-            m_material.SetTexture(RenderHellShaderIDs.SelectionMask, selectionMask);
+            m_computeShader.SetTexture(m_updateMaskKernel, RenderHellShaderIDs.SelectionMask, m_selectionMask);
+            m_computeShader.SetTexture(m_resetDrawnRegionKernel, RenderHellShaderIDs.SelectionMask, m_selectionMask);
+            m_computeShader.SetTexture(m_clipDrawnRegionKernel, RenderHellShaderIDs.SelectionMask, m_selectionMask);
+            m_computeShader.SetTexture(m_resetClippedRegionKernel, RenderHellShaderIDs.SelectionMask, m_selectionMask);
+            m_material.SetTexture(RenderHellShaderIDs.SelectionMask, m_selectionMask);
             
             m_computeShader.SetInt(RenderHellShaderIDs.SelectionMaskSize, size);
             m_material.SetInt(RenderHellShaderIDs.SelectionMaskSize, size);

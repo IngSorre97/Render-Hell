@@ -3,14 +3,11 @@
 
 #include "Assets/RenderHell/Common/ShaderUtilities/FastConditionals.cginc"
 #include "Assets/RenderHell/Common/ShaderUtilities/ShaderUtilities.cginc"
+#include "Assets/RenderHell/Brush3D/Shader/Brush3DUtilities.cginc"
 
 #pragma enable_d3d11_debug_symbols
 
 float _Initialized;
-
-float3 _BoundsMin;
-float3 _BoundsMax;
-
 float3 _CursorNormalizedPos;
 float _CursorNormalizedRadius;
 
@@ -30,11 +27,6 @@ float _DrawingRimPower;
 
 float4 _OutlineColor;
 float _OutlineThickness;
-
-float3 ComputeBrush3DNormalizedUV(float3 objPos)
-{
-    return (objPos - _BoundsMin) / (_BoundsMax - _BoundsMin);
-}
 
 float4 GetBrush3DStoredColor(float3 normalizedUV)
 {

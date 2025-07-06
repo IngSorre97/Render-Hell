@@ -3,10 +3,12 @@
 #pragma kernel ResetDrawnRegion
 #pragma kernel ClipDrawnRegion
 #pragma kernel ResetClippedRegion
+#pragma kernel ComputeDrawnVertices;
 
 #pragma enable_d3d11_debug_symbols
 
 #include "Assets/RenderHell/Common/ShaderUtilities/ShaderUtilities.cginc"
+#include "Assets/RenderHell/Brush3D/Shader/Brush3DUtilities.cginc"
 
 RWTexture3D<float4> _SelectionMask;
 int _SelectionMaskSize;
@@ -20,6 +22,10 @@ float _Clipping;
 float _ErasingDrawn;
 
 float4 _DrawingColor;
+
+int _MeshVerticesCount;
+RWStructuredBuffer<float3> _MeshVertices;
+RWStructuredBuffer<bool> _MeshVerticesChecks;
 
 [numthreads(8,8,8)]
 void UpdateMask (uint3 id : SV_DispatchThreadID)
@@ -75,4 +81,22 @@ void ResetClippedRegion (uint3 id : SV_DispatchThreadID)
     
     float4 storedColor = _SelectionMask[id];
     _SelectionMask[id] = lerp(storedColor, _NoColor, IsClippedColor(storedColor));
+}
+
+[numthreads(8,8,8)]
+void ComputeDrawnVertices (uint3 id : SV_DispatchThreadID)
+{
+    uint index = id.x * _SelectionMaskSize * _SelectionMaskSize + id.y * _SelectionMaskSize + id.z;
+    if (ClipId(index, _MeshVerticesCount))
+    {
+        return;
+    }
+
+    float3 vertex = _MeshVertices[index];
+    float3 normalizedUV = ComputeBrush3DNormalizedUV(vertex);
+    uint3 nearestMaskElementIndex = uint3(normalizedUV.x * _SelectionMaskSize, normalizedUV.y * _SelectionMaskSize, normalizedUV.z * _SelectionMaskSize);
+
+    float4 storedColor = _SelectionMask[nearestMaskElementIndex];
+    
+    _MeshVerticesChecks[index] = IsDrawnColor(storedColor);
 }

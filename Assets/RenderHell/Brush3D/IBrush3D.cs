@@ -29,5 +29,7 @@ namespace IngSorre97.RenderHell.Brush3D
         void ClipDrawnRegion();
 
         void ResetClippedRegion();
+
+        GameObject ExtrapolateDrawnRegion();
     }
 }
