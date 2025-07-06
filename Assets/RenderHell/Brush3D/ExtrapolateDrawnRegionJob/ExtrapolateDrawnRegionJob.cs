@@ -60,13 +60,13 @@ namespace IngSorre97.RenderHell.Brush3D
         {
             var trianglesNativeArray = new NativeArray<int>(triangles, Allocator.Persistent);
             int trianglesCount = triangles.Length / 3;
-            var drawnTriangles = new NativeArray<int4>(trianglesCount, Allocator.Persistent);
+            var drawnTriangles = new NativeList<int3>(Allocator.Persistent);
 
             var job = new ExtrapolateDrawnTrianglesJob
             {
                 drawnVertices = drawnVertices,
                 triangles = trianglesNativeArray,
-                drawnTriangles = drawnTriangles
+                //drawnTriangles = drawnTriangles
             };
 
             JobHandle jobHandle = job.ScheduleByRef(trianglesCount, 1);
@@ -74,7 +74,7 @@ namespace IngSorre97.RenderHell.Brush3D
 
             trianglesNativeArray.Dispose();
 
-            return drawnTriangles;
+            return default;
         }
     }
 }
