@@ -24,8 +24,9 @@ float _ErasingDrawn;
 float4 _DrawingColor;
 
 int _MeshVerticesCount;
+RWStructuredBuffer<int> _MeshDrawnVerticesCount;
 RWStructuredBuffer<float3> _MeshVertices;
-RWStructuredBuffer<bool> _MeshVerticesChecks;
+RWStructuredBuffer<float4> _MeshDrawnVertices;
 
 [numthreads(8,8,8)]
 void UpdateMask (uint3 id : SV_DispatchThreadID)
@@ -93,10 +94,11 @@ void ComputeDrawnVertices (uint3 id : SV_DispatchThreadID)
     }
 
     float3 vertex = _MeshVertices[index];
-    float3 normalizedUV = ComputeBrush3DNormalizedUV(vertex);
-    uint3 nearestMaskElementIndex = uint3(normalizedUV.x * _SelectionMaskSize, normalizedUV.y * _SelectionMaskSize, normalizedUV.z * _SelectionMaskSize);
+    float3 vertexNormalizedUV = ComputeBrush3DNormalizedUV(vertex);
+    uint3 nearestMaskElementIndex = uint3(vertexNormalizedUV.x * _SelectionMaskSize, vertexNormalizedUV.y * _SelectionMaskSize, vertexNormalizedUV.z * _SelectionMaskSize);
 
     float4 storedColor = _SelectionMask[nearestMaskElementIndex];
-    
-    _MeshVerticesChecks[index] = IsDrawnColor(storedColor);
+    float isDrawnColor = IsDrawnColor(storedColor);
+    _MeshDrawnVertices[index] = float4(vertex, isDrawnColor);
+    InterlockedAdd(_MeshDrawnVerticesCount[0], isDrawnColor);
 }

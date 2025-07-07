@@ -23,6 +23,7 @@ namespace IngSorre97.RenderHell
         public static int ErasingDrawn { get; } = Shader.PropertyToID("_ErasingDrawn");
         public static int MeshVertices { get; } = Shader.PropertyToID("_MeshVertices");
         public static int MeshVerticesCount { get; } = Shader.PropertyToID("_MeshVerticesCount");
-        public static int MeshVerticesChecks { get; } = Shader.PropertyToID("_MeshVerticesChecks");
+        public static int MeshDrawnVerticesCount { get; } = Shader.PropertyToID("_MeshDrawnVerticesCount");
+        public static int MeshDrawnVertices { get; } = Shader.PropertyToID("_MeshDrawnVertices");
     }
 }
