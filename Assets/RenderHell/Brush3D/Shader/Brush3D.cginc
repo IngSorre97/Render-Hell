@@ -6,6 +6,8 @@
 
 #pragma enable_d3d11_debug_symbols
 
+float _Initialized;
+
 float3 _BoundsMin;
 float3 _BoundsMax;
 
@@ -56,18 +58,18 @@ float4 ComputeBrush3DColor(float4 storedColor, float isInsideCursorSphere, float
     float4 newColor = lerp(_NoColor, storedColor, IsDrawnColor(storedColor));
     newColor = lerp(newColor, _IntersectingColor, isInsideCursorSphere);
     newColor = lerp(newColor, _OutlineColor, isInsideCursorOutline);
+    newColor = lerp(_NoColor, newColor, _Initialized);
     
     return newColor;
 }
 
 float ComputeBrush3DRimPower(float rimPower, float4 storedColor, float isInsideCursorSphere)
 {
-    clip(storedColor.w);
-    
     float newRimPower = lerp(0.0f, _DrawingRimPower, IsDrawnColor(storedColor));
     newRimPower = lerp(newRimPower, _IntersectingRimPower, isInsideCursorSphere);
+    newRimPower = lerp(rimPower, newRimPower, or(IsDrawnColor(storedColor), isInsideCursorSphere));
 
-    return lerp(rimPower, newRimPower, or(IsDrawnColor(storedColor), isInsideCursorSphere));
+    return lerp(rimPower, newRimPower, _Initialized);
 }
 
 #endif // __BRUSH3D__
