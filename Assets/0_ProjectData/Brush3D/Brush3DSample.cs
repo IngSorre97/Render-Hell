@@ -19,12 +19,12 @@ namespace IngSorre97.RenderHell.Samples
         [SerializeField] bool m_drawing;
         [SerializeField] bool m_clipping;
         [SerializeField] bool m_erasingDrawn;
-        [SerializeField] [Range(0.0f, 25.0f)] float m_radius;
+        [SerializeField] [Range(0.0f, 1.0f)] float m_radius;
         [Space]
         [SerializeField] [Range(0.0f, 10.0f)] float m_intersectionRimPower;
         [SerializeField] Color m_intersectionColor;
         [Space]
-        [SerializeField] [Range(0.0f, 50.0f)] float m_outlineThickness;
+        [SerializeField] [Range(0.0f, 1.0f)] float m_outlineThickness;
         [SerializeField] Color m_outlineColor;
         [Space]
         [SerializeField] [Range(0.0f, 10.0f)] float m_drawingRimPower;
