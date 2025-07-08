@@ -8,6 +8,11 @@ namespace IngSorre97.RenderHell.Brush3D
         
         [SerializeField] ComputeShader m_computeShader;
 
+        float m_radius;
+        float m_outlineThickness;
+
+        float m_boundsExtent;
+        
         MeshRenderer m_meshRenderer;
         Bounds m_bounds;
         Brush3DRenderPass m_renderPass;
@@ -22,6 +27,7 @@ namespace IngSorre97.RenderHell.Brush3D
             m_meshRenderer = meshRenderer;
             m_bounds = bounds;
             
+            m_boundsExtent = Mathf.Max(bounds.extents.x, bounds.extents.y, bounds.extents.z);
             m_renderPass = new Brush3DRenderPass(meshRenderer, m_bounds, m_computeShader, SELECTION_MASK_SIZE);
         }
 
@@ -44,8 +50,17 @@ namespace IngSorre97.RenderHell.Brush3D
                 Debug.LogError("Radius must be greater than zero");
                 return;
             }
-
-            m_renderPass.SetRadius(radius);
+            
+            m_radius = radius;
+            m_renderPass.SetRadius(NormalizeLengthInBoundsExtent(radius));
+            
+            if (m_outlineThickness <= radius)
+            {
+                return;
+            }
+            
+            Debug.LogWarning($"Scaled down outline thickness to {radius}");
+            SetOutlineThickness(radius);
         }
 
         public void SetIntersectionActivation(bool active)
@@ -77,7 +92,14 @@ namespace IngSorre97.RenderHell.Brush3D
                 return;
             }
             
-            m_renderPass.SetOutlineThickness(thickness);
+            if (thickness > m_radius)
+            {
+                Debug.LogWarning($"Thickness {thickness} would be greater than {m_radius}");
+                return;
+            }
+            
+            m_outlineThickness = thickness;
+            m_renderPass.SetOutlineThickness(NormalizeLengthInBoundsExtent(thickness));
         }
 
         public void SetDrawingActivation(bool active)
@@ -119,6 +141,11 @@ namespace IngSorre97.RenderHell.Brush3D
         public void ResetClippedRegion()
         {
             m_renderPass.ResetClippedRegion();
+        }
+        
+        float NormalizeLengthInBoundsExtent(float length)
+        {
+            return Mathf.Clamp01(length / m_boundsExtent);
         }
     }
 }

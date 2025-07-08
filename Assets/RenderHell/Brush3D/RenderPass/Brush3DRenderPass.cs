@@ -9,13 +9,8 @@ namespace IngSorre97.RenderHell.Brush3D
     class Brush3DRenderPass : BaseRenderPass, IBrush3D
     {
         const RenderPassEvent RENDER_PASS_EVENT = RenderPassEvent.BeforeRenderingTransparents;
-
-        public float Radius { get; private set; }
-        public float OutlineThickness { get; private set; }
         
         readonly Material m_material;
-        readonly float m_boundsExtent;
-        readonly MeshRenderer m_meshRenderer;
         readonly int m_selectionMaskSize;
         
         readonly ComputeShader m_computeShader;
@@ -24,7 +19,6 @@ namespace IngSorre97.RenderHell.Brush3D
         readonly int m_clipDrawnRegionKernel;
         readonly int m_resetClippedRegionKernel;
 
-
         bool m_intersectionActive;
         bool m_drawingActive;
         bool m_clippingActive;
@@ -32,8 +26,6 @@ namespace IngSorre97.RenderHell.Brush3D
         public Brush3DRenderPass(MeshRenderer meshRenderer, Bounds bounds, ComputeShader computeShader, int selectionMaskSize)
             : base("Brush3DPass", RENDER_PASS_EVENT, Camera.main)
         {
-            m_meshRenderer = meshRenderer;
-            m_boundsExtent = Mathf.Max(bounds.extents.x, bounds.extents.y, bounds.extents.z);
             m_computeShader = Object.Instantiate(computeShader);
             m_selectionMaskSize = selectionMaskSize;
             
@@ -42,7 +34,7 @@ namespace IngSorre97.RenderHell.Brush3D
             m_clipDrawnRegionKernel = m_computeShader.FindKernel("ClipDrawnRegion");
             m_resetClippedRegionKernel = m_computeShader.FindKernel("ResetClippedRegion");
 
-            m_material = m_meshRenderer.material;
+            m_material = meshRenderer.material;
             
             SetTexture3D(selectionMaskSize);
             
@@ -68,20 +60,10 @@ namespace IngSorre97.RenderHell.Brush3D
             m_material.SetVector(RenderHellShaderIDs.CursorNormalizedPos, pos);
         }
         
-        public void SetRadius(float radius)
+        public void SetRadius(float normalizedRadius)
         {
-            Radius = radius;
-            float normalizedRadius = NormalizeLengthInBoundsExtent(radius);
             m_computeShader.SetFloat(RenderHellShaderIDs.CursorNormalizedRadius, normalizedRadius);
             m_material.SetFloat(RenderHellShaderIDs.CursorNormalizedRadius, normalizedRadius);
-
-            if (OutlineThickness <= radius)
-            {
-                return;
-            }
-
-            Debug.LogWarning($"Scaled down outline thickness to {radius}");
-            SetOutlineThickness(radius);
         }
 
         public void SetIntersectionActivation(bool active)
@@ -102,16 +84,8 @@ namespace IngSorre97.RenderHell.Brush3D
             m_material.SetColor(RenderHellShaderIDs.OutlineColor, color);
         }
 
-        public void SetOutlineThickness(float thickness)
+        public void SetOutlineThickness(float normalizedOutlineThickness)
         {
-            if (thickness > Radius)
-            {
-                Debug.LogWarning($"Thickness {thickness} would be greater than {Radius}");
-                return;
-            }
-            
-            OutlineThickness = thickness;
-            float normalizedOutlineThickness = NormalizeLengthInBoundsExtent(thickness);
             m_material.SetFloat(RenderHellShaderIDs.OutlineThickness, normalizedOutlineThickness);
         }
 
@@ -187,11 +161,6 @@ namespace IngSorre97.RenderHell.Brush3D
             
             m_computeShader.SetInt(RenderHellShaderIDs.SelectionMaskSize, size);
             m_material.SetInt(RenderHellShaderIDs.SelectionMaskSize, size);
-        }
-
-        float NormalizeLengthInBoundsExtent(float length)
-        {
-            return Mathf.Clamp01(length / m_boundsExtent);
         }
 
         protected override void OnPassExecute(CommandBuffer commandBuffer, ScriptableRenderContext context, ref RenderingData renderingData)
