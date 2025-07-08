@@ -31,7 +31,7 @@ void UpdateMask (uint3 id : SV_DispatchThreadID)
     
     float4 storedColor = _SelectionMask[id];
 
-    float4 newColor = lerp(_NoColor, _DrawingColor, _Drawing);
+    float4 newColor = lerp(storedColor, _DrawingColor, _Drawing);
     newColor = lerp(newColor, _ClippedColor, _Clipping);
     newColor = lerp(newColor, _ClippedColor, IsClippedColor(storedColor));
     newColor = lerp(newColor, _NoColor, and(IsDrawnColor(storedColor), _ErasingDrawn));
