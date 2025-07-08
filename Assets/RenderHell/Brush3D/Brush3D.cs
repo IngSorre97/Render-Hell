@@ -10,34 +10,32 @@ namespace IngSorre97.RenderHell.Brush3D
 
         float m_radius;
         float m_outlineThickness;
-
-        float m_boundsExtent;
         
         MeshRenderer m_meshRenderer;
-        Bounds m_bounds;
-        Brush3DRenderPass m_renderPass;
+        Mesh m_mesh;
         
+        Brush3DRenderPass m_renderPass;
+
         void OnDestroy()
         {
             m_renderPass.Dispose();
         }
 
-        public void Setup(MeshRenderer meshRenderer, Bounds bounds)
+        public void Setup(MeshRenderer meshRenderer, Mesh mesh)
         {
             m_meshRenderer = meshRenderer;
-            m_bounds = bounds;
+            m_mesh = mesh;
             
-            m_boundsExtent = Mathf.Max(bounds.extents.x, bounds.extents.y, bounds.extents.z);
-            m_renderPass = new Brush3DRenderPass(meshRenderer, m_bounds, m_computeShader, SELECTION_MASK_SIZE);
+            m_renderPass = new Brush3DRenderPass(meshRenderer, m_mesh.bounds, m_computeShader, SELECTION_MASK_SIZE);
         }
 
         public void SetPosition(Vector3 pos)
         {
             Vector3 localPos = m_meshRenderer.transform.InverseTransformPoint(pos);
             var normalizedPos = new Vector3(
-                (localPos.x - m_bounds.min.x) / (m_bounds.max.x - m_bounds.min.x),
-                (localPos.y - m_bounds.min.y) / (m_bounds.max.y - m_bounds.min.y),
-                (localPos.z - m_bounds.min.z) / (m_bounds.max.z - m_bounds.min.z)
+                (localPos.x - m_mesh.bounds.min.x) / (m_mesh.bounds.max.x - m_mesh.bounds.min.x),
+                (localPos.y - m_mesh.bounds.min.y) / (m_mesh.bounds.max.y - m_mesh.bounds.min.y),
+                (localPos.z - m_mesh.bounds.min.z) / (m_mesh.bounds.max.z - m_mesh.bounds.min.z)
             );
             
             m_renderPass.SetPosition(normalizedPos);
@@ -145,7 +143,8 @@ namespace IngSorre97.RenderHell.Brush3D
         
         float NormalizeLengthInBoundsExtent(float length)
         {
-            return Mathf.Clamp01(length / m_boundsExtent);
+            float boundsExtent = Mathf.Max(m_mesh.bounds.extents.x, m_mesh.bounds.extents.y, m_mesh.bounds.extents.z);
+            return length / (boundsExtent * m_meshRenderer.transform.lossyScale.x);
         }
     }
 }
