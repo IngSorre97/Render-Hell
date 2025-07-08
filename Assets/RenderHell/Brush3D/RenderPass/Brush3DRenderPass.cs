@@ -40,6 +40,7 @@ namespace IngSorre97.RenderHell.Brush3D
             
             m_material.SetVector(RenderHellShaderIDs.BoundsMin, bounds.min);
             m_material.SetVector(RenderHellShaderIDs.BoundsMax, bounds.max);
+            m_material.SetFloat(RenderHellShaderIDs.Initialized, 1.0f);
         }
 
         public override void Dispose()
