@@ -45,10 +45,10 @@ MonoBehaviour:
   nearClipPlaneOpaqueDisplay: 0.1
   farClipPlaneOpaqueDisplay: 10
   cameraClearFlagsOpaqueDisplay: 2
-  backgroundColorOpaqueDisplay: {r: 0, g: 0, b: 0, a: 0}
+  backgroundColorOpaqueDisplay: {r: 0.3207547, g: 0.3207547, b: 0.3207547, a: 0}
   opaqueQualityLevel: 0
   nearClipPlaneTransparentDisplay: 0.1
   farClipPlaneTransparentDisplay: 10
   cameraClearFlagsTransparentDisplay: 2
-  backgroundColorTransparentDisplay: {r: 0, g: 0, b: 0, a: 0}
+  backgroundColorTransparentDisplay: {r: 0.3207547, g: 0.3207547, b: 0.3207547, a: 0}
   transparentQualityLevel: 0

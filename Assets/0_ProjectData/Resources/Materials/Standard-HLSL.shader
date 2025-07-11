@@ -133,6 +133,8 @@ Shader "UX/Standard-HLSL"
             #pragma vertex vert
             #pragma fragment frag
 
+            #define _RIM_LIGHT
+
             #pragma multi_compile_instancing
             #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile _ UNITY_UI_CLIP_RECT
@@ -774,13 +776,13 @@ Shader "UX/Standard-HLSL"
             {
                 UNITY_SETUP_INSTANCE_ID(i);
 
-                float4 brush3DStoredColor = GetBrush3DStoredColor(i.brush3DNormalizedUV);
-                float brush3DIsInsideSphere = IsInsideCursorSphere(i.brush3DNormalizedUV);
-                float brush3DIsInsideOutline = IsInsideCursorOutline(i.brush3DNormalizedUV, brush3DIsInsideSphere);
-                
+                float rimPower = 0.0f;
+                float3 rimColor = float3(0.0f, 0.0f, 0.0f);
 #if defined(_RIM_LIGHT)
-                _RimPower = ComputeBrush3DRimPower(_RimPower, brush3DStoredColor, brush3DIsInsideSphere);
+                rimPower = _RimPower;
+                rimColor = _RimColor;
 #endif
+                brushProperties brushProperties = GetBrush3DStoredProperties(i.brush3DNormalizedUV, _Color, rimColor, rimPower);
                 
 #if defined(_TRIPLANAR_MAPPING)
                 // Calculate triplanar uvs and apply texture scale and offset values like TRANSFORM_TEX.
@@ -911,8 +913,7 @@ Shader "UX/Standard-HLSL"
                 float roundCornerClip = RoundCorners(roundCornerPosition, cornerCircleDistance, cornerCircleRadius);
 #endif
 
-                albedo *= UNITY_ACCESS_INSTANCED_PROP(Props, _Color);
-                albedo += ComputeBrush3DColor(brush3DStoredColor, brush3DIsInsideSphere, brush3DIsInsideOutline);
+                albedo *= UNITY_ACCESS_INSTANCED_PROP(Props, brushProperties.Albedo);
 
 #if defined(_VERTEX_COLORS)
                 albedo *= i.color;
@@ -1082,7 +1083,7 @@ Shader "UX/Standard-HLSL"
 #if defined(_FRESNEL)
                 float fresnel = 1.0 - saturate(abs(dot(worldViewDir, worldNormal)));
 #if defined(_RIM_LIGHT)
-                float3 fresnelColor = _RimColor * pow(fresnel, _RimPower);
+                float3 fresnelColor = brushProperties.RimColor * pow(fresnel, brushProperties.RimPower);
 #else
                 float3 fresnelColor = unity_IndirectSpecColor.rgb * (pow(fresnel, _FresnelPower) * max(_Smoothness, 0.5));
 #endif
