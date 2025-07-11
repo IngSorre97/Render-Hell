@@ -8,7 +8,7 @@ namespace IngSorre97.RenderHell
 {
     public static class RenderHellAPI
     {
-        public static IBrush3D CreateBrush3D(MeshRenderer meshRenderer, MeshFilter meshFilter)
+        public static IBrush3D CreateBrush3D(MeshRenderer meshRenderer, MeshFilter meshFilter, Brush3DProperties intersectingProperties)
         {
             var prefab = Resources.Load<Brush3D.Brush3D>("Prefabs/Brush3D");
             if (prefab == null)
@@ -27,7 +27,7 @@ namespace IngSorre97.RenderHell
             }
             
             Brush3D.Brush3D brush3D = Object.Instantiate(prefab);
-            brush3D.Setup(meshRenderer, meshFilter.mesh);
+            brush3D.Setup(meshRenderer, meshFilter.mesh, intersectingProperties);
             brush3D.name = "Brush3D - " + meshRenderer.gameObject.name;
             return brush3D;
         }

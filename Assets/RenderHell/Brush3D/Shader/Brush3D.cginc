@@ -1,75 +1,77 @@
 #ifndef __BRUSH3D__
 #define __BRUSH3D__
 
-#include "Assets/RenderHell/Common/ShaderUtilities/FastConditionals.cginc"
-#include "Assets/RenderHell/Common/ShaderUtilities/ShaderUtilities.cginc"
+#include "Assets/RenderHell/Brush3D/Shader/Brush3DCommon.cginc"
 
 #pragma enable_d3d11_debug_symbols
 
 float _Initialized;
 
-float3 _BoundsMin;
-float3 _BoundsMax;
-
-float3 _CursorNormalizedPos;
-float _CursorNormalizedRadius;
-
-float _Intersecting;
-float _Drawing;
-float _Clipping;
-
-TEXTURE3D(_SelectionMask);
-SAMPLER(sampler_SelectionMask);
-int _SelectionMaskSize;
-
-float4 _IntersectingColor;
-float _IntersectingRimPower;
-
-float4 _DrawingColor;
-float _DrawingRimPower;
+Texture3D<float> _SelectionMask;
 
 float4 _OutlineColor;
 float _OutlineThickness;
 
-float3 ComputeBrush3DNormalizedUV(float3 objPos)
-{
-    return (objPos - _BoundsMin) / (_BoundsMax - _BoundsMin);
-}
-
-float4 GetBrush3DStoredColor(float3 normalizedUV)
-{
-    return SAMPLE_TEXTURE3D(_SelectionMask, sampler_SelectionMask, normalizedUV);
-}
-
-float IsInsideCursorSphere(float3 normalizedUV)
-{
-    return IsInsideSphere(normalizedUV, _CursorNormalizedPos, _CursorNormalizedRadius);
-}
+StructuredBuffer<brushProperties> _BrushProperties;
 
 float IsInsideCursorOutline(float3 normalizedUV, float isInsideCursorSphere)
 {
     return and(isInsideCursorSphere, not(IsInsideSphere(normalizedUV, _CursorNormalizedPos, _CursorNormalizedRadius - _OutlineThickness)));
 }
 
-float4 ComputeBrush3DColor(float4 storedColor, float isInsideCursorSphere, float isInsideCursorOutline)
+float4 ComputeBrush3DAlbedo(float storedIndex, float4 materialAlbedo, float isInsideCursorSphere, float isInsideCursorOutline)
 {
-    clip(storedColor.w);
+    float isDrawnIndex = IsDrawnIndex(storedIndex);
+    float4 storedAlbedo = _BrushProperties[storedIndex].Albedo;
+    float4 intersectionAlbedo = _BrushProperties[0].Albedo;
     
-    float4 newColor = lerp(_NoColor, storedColor, IsDrawnColor(storedColor));
-    newColor = lerp(newColor, _IntersectingColor, isInsideCursorSphere);
-    newColor = lerp(newColor, _OutlineColor, isInsideCursorOutline);
-    newColor = lerp(_NoColor, newColor, _Initialized);
+    float4 newAlbedo = lerp(materialAlbedo, storedAlbedo, isDrawnIndex);
+    newAlbedo = lerp(newAlbedo, intersectionAlbedo, isInsideCursorSphere);
+    newAlbedo = lerp(newAlbedo, _OutlineColor, isInsideCursorOutline);
     
-    return newColor;
+    return lerp(materialAlbedo, newAlbedo, _Initialized);
 }
 
-float ComputeBrush3DRimPower(float rimPower, float4 storedColor, float isInsideCursorSphere)
+float3 ComputeBrush3DRimColor(float storedIndex, float3 materialRimColor, float isInsideCursorSphere)
 {
-    float newRimPower = lerp(0.0f, _DrawingRimPower, IsDrawnColor(storedColor));
-    newRimPower = lerp(newRimPower, _IntersectingRimPower, isInsideCursorSphere);
-    newRimPower = lerp(rimPower, newRimPower, or(IsDrawnColor(storedColor), isInsideCursorSphere));
+    float isDrawnIndex = IsDrawnIndex(storedIndex);
+    float3 storedRimColor = _BrushProperties[storedIndex].RimColor;
+    float3 intersectionRimColor = _BrushProperties[0].RimColor;
+    
+    float3 newRimColor = lerp(materialRimColor, storedRimColor, isDrawnIndex);
+    newRimColor = lerp(newRimColor, intersectionRimColor, isInsideCursorSphere);
+    newRimColor = lerp(materialRimColor, newRimColor, or(isDrawnIndex, isInsideCursorSphere));
 
-    return lerp(rimPower, newRimPower, _Initialized);
+    return lerp(materialRimColor, newRimColor, _Initialized);
+}
+
+float ComputeBrush3DRimPower(float storedIndex, float materialRimPower, float isInsideCursorSphere)
+{
+    float isDrawnIndex = IsDrawnIndex(storedIndex);
+    float storedRimPower = _BrushProperties[storedIndex].RimPower;
+    float intersectionRimPower = _BrushProperties[0].RimPower;
+    
+    float newRimPower = lerp(materialRimPower, storedRimPower, isDrawnIndex);
+    newRimPower = lerp(newRimPower, intersectionRimPower, isInsideCursorSphere);
+    newRimPower = lerp(materialRimPower, newRimPower, or(isDrawnIndex, isInsideCursorSphere));
+
+    return lerp(materialRimPower, newRimPower, _Initialized);
+}
+
+brushProperties GetBrush3DStoredProperties(float3 normalizedUV, float4 materialAlbedo, float3 materialRimColor, float materialRimPower)
+{
+    uint3 id = uint3(normalizedUV.x * _SelectionMaskSize, normalizedUV.y * _SelectionMaskSize, normalizedUV.z * _SelectionMaskSize);
+    float storedIndex = _SelectionMask[id];
+    clip(storedIndex);
+
+    float isInsideCursorSphere = IsInsideCursorSphere(normalizedUV);
+    float isInsideCursorOutline = IsInsideCursorOutline(normalizedUV, isInsideCursorSphere);
+    
+    brushProperties voxelProperties;
+    voxelProperties.Albedo = ComputeBrush3DAlbedo(storedIndex, materialAlbedo, isInsideCursorSphere, isInsideCursorOutline);
+    voxelProperties.RimColor = ComputeBrush3DRimColor(storedIndex, materialRimColor, isInsideCursorSphere);
+    voxelProperties.RimPower = ComputeBrush3DRimPower(storedIndex, materialRimPower, isInsideCursorSphere);
+    return voxelProperties;
 }
 
 #endif // __BRUSH3D__

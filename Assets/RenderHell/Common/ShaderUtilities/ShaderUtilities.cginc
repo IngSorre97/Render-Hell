@@ -6,26 +6,6 @@
 float _WindowHalfWidth;
 float _WindowCenter;
 
-static const float4 _NoColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-static const float4 _ClippedColor = float4(0.0f, 0.0f, 0.0f, -1.0f);
-
-float IsDrawnColor(float4 color)
-{
-    float redIsNotZero = when_neq(color.x, 0.0f);
-    float greenIsNotZero = when_neq(color.y, 0.0f);
-    float blueIsNotZero = when_neq(color.z, 0.0f);
-
-    float atLeastOneColorIsNotZero = or(or(redIsNotZero, greenIsNotZero), blueIsNotZero);
-    float alphaIsNotNegative = when_neq(color.w, -1.0f);
-
-    return and(atLeastOneColorIsNotZero, alphaIsNotNegative);
-}
-
-float IsClippedColor(float4 color)
-{
-    return when_eq(color.w, -1.0f);
-}
-
 float AdjustContrast(float originalColor)
 {
     float minValue = max(0.0f, _WindowCenter - _WindowHalfWidth);
