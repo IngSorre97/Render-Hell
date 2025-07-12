@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -21,6 +22,13 @@ namespace IngSorre97.RenderHell.Brush3D
         readonly int m_resetDrawnRegionKernel;
         readonly int m_clipDrawnRegionKernel;
         readonly int m_resetClippedRegionKernel;
+        readonly int m_removeBrushPropertiesKernel;
+
+        List<int> ComputeShaderKernels => new()
+        {
+            m_updateMaskKernel, m_resetDrawnRegionKernel, m_clipDrawnRegionKernel, m_resetClippedRegionKernel,
+            m_removeBrushPropertiesKernel
+        };
         
         readonly List<Brush3DProperties> m_drawingProperties;
         ComputeBuffer m_drawingPropertiesBuffer;
@@ -38,6 +46,7 @@ namespace IngSorre97.RenderHell.Brush3D
             m_resetDrawnRegionKernel = m_computeShader.FindKernel("ResetDrawnRegion");
             m_clipDrawnRegionKernel = m_computeShader.FindKernel("ClipDrawnRegion");
             m_resetClippedRegionKernel = m_computeShader.FindKernel("ResetClippedRegion");
+            m_removeBrushPropertiesKernel = m_computeShader.FindKernel("RemoveBrushProperties");
 
             m_material = meshRenderer.material;
             m_drawingProperties = new List<Brush3DProperties>{intersectingProperties};
@@ -97,13 +106,11 @@ namespace IngSorre97.RenderHell.Brush3D
 
         public void AddDrawingProperties(Brush3DProperties properties)
         {
-            if (TryGetBrushPropertiesIndex(properties, out int _))
-            {
-                Debug.LogError("Aborted AddDrawingProperties( ), cannot add same drawing properties twice");
-                return;
-            }
+            const string operation = "AddDrawingProperties";
+            EnsurePropertiesDoNotExists(properties, operation);
             
             m_drawingProperties.Add(properties);
+            
             UpdateDrawingProperties();
         }
 
@@ -114,64 +121,46 @@ namespace IngSorre97.RenderHell.Brush3D
             newDrawingPropertiesBuffer.name = "Brush3DPropertiesBuffer";
             newDrawingPropertiesBuffer.SetData(properties);
             
-            m_computeShader.SetBuffer(m_updateMaskKernel, RenderHellShaderIDs.BrushProperties, newDrawingPropertiesBuffer);
-            m_computeShader.SetBuffer(m_resetDrawnRegionKernel, RenderHellShaderIDs.BrushProperties, newDrawingPropertiesBuffer);
-            m_computeShader.SetBuffer(m_clipDrawnRegionKernel, RenderHellShaderIDs.BrushProperties, newDrawingPropertiesBuffer);
-            m_computeShader.SetBuffer(m_resetClippedRegionKernel, RenderHellShaderIDs.BrushProperties, newDrawingPropertiesBuffer);
+            ComputeShaderKernels.ForEach(kernel => m_computeShader.SetBuffer(kernel, RenderHellShaderIDs.BrushProperties, newDrawingPropertiesBuffer));
             m_material.SetBuffer(RenderHellShaderIDs.BrushProperties, newDrawingPropertiesBuffer);
-
-            if (m_drawingPropertiesBuffer == null)
-            {
-                return;
-            }
-
-            m_drawingPropertiesBuffer.Dispose();
+            
+            m_drawingPropertiesBuffer?.Dispose();
             m_drawingPropertiesBuffer = newDrawingPropertiesBuffer;
         }
 
         public void RemoveDrawingProperties(Brush3DProperties properties)
         {
-            if (properties == IntersectingProperties)
+            const string operation = "RemoveDrawingProperties";
+            EnsurePropertiesExists(properties, operation, out int removedIndex);
+            EnsureNoIntersectingProperties(properties, operation);
+            EnsureNoCurrentProperties(properties, operation);
+
+            int drawIndex = m_drawingProperties.IndexOf(m_currentDrawingProperties);
+            if (drawIndex != -1 && drawIndex > removedIndex)
             {
-                Debug.LogError("Aborted RemoveDrawingProperties( ), removing intersecting properties is forbidden");
-                return;
+                m_computeShader.SetFloat(RenderHellShaderIDs.DrawingIndex, drawIndex - 1);
             }
             
-            if (!TryGetBrushPropertiesIndex(properties, out int _))
+            int eraseIndex = m_drawingProperties.IndexOf(m_currentErasingProperties);
+            if (eraseIndex != -1 && eraseIndex > removedIndex)
             {
-                Debug.LogError("Aborted RemoveDrawingProperties( ), no property found");
-                return;
+                m_computeShader.SetFloat(RenderHellShaderIDs.ErasingIndex, eraseIndex - 1);
             }
             
-            if (properties == m_currentDrawingProperties)
-            {
-                Debug.LogError("Aborted RemoveDrawingProperties( ), removing current drawing properties is forbidden");
-                return;
-            }
+            m_drawingProperties.RemoveAt(removedIndex);
             
-            if (properties == m_currentErasingProperties)
-            {
-                Debug.LogError("Aborted RemoveDrawingProperties( ), removing current erasing properties is forbidden");
-                return;
-            }
+            m_computeShader.SetFloat(RenderHellShaderIDs.RemovedIndex, removedIndex);
+            int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
+            m_computeShader.Dispatch(m_removeBrushPropertiesKernel, threadGroup, threadGroup, threadGroup);
             
-            m_drawingProperties.Remove(properties);
             UpdateDrawingProperties();
         }
 
         public void StartDrawing(Brush3DProperties properties)
         {
-            if (properties == IntersectingProperties)
-            {
-                Debug.LogError("Aborted StartDrawing( ), drawing with intersecting properties is forbidden");
-                return;
-            }
-            
-            if (!TryGetBrushPropertiesIndex(properties, out int index))
-            {
-                Debug.LogError("Aborted StartDrawing( ), no property found");
-                return;
-            }
+            const string operation = "StartDrawing";
+            EnsurePropertiesExists(properties, operation, out int index);
+            EnsureNoIntersectingProperties(properties, operation);
             
             m_currentDrawingProperties = properties;
             m_computeShader.SetFloat(RenderHellShaderIDs.DrawingIndex, index);
@@ -185,11 +174,9 @@ namespace IngSorre97.RenderHell.Brush3D
         
         public void StartErasing(Brush3DProperties properties)
         {
-            if (!TryGetBrushPropertiesIndex(properties, out int index))
-            {
-                Debug.LogError("Aborted StartErasing( ), no property found");
-                return;
-            }
+            const string operation = "StartErasing";
+            EnsurePropertiesExists(properties, operation, out int index);
+            EnsureNoIntersectingProperties(properties, operation);
             
             m_currentErasingProperties = properties;
             m_computeShader.SetFloat(RenderHellShaderIDs.ErasingIndex, index);
@@ -210,15 +197,13 @@ namespace IngSorre97.RenderHell.Brush3D
         {
             m_computeShader.SetFloat(RenderHellShaderIDs.Clipping, 0.0f);
         }
-
-
+        
         public void ResetDrawnRegion(Brush3DProperties properties)
         {
-            if (!TryGetBrushPropertiesIndex(properties, out int index))
-            {
-                Debug.LogError("Aborted ResetDrawnRegion( ), no property found");
-                return;
-            }
+            const string operation = "ResetDrawnRegion";
+            EnsurePropertiesExists(properties, operation, out int index);
+            EnsureNoIntersectingProperties(properties, operation);
+            
             m_computeShader.SetFloat(RenderHellShaderIDs.ResetDrawnRegionIndex, index);
             
             int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
@@ -227,11 +212,10 @@ namespace IngSorre97.RenderHell.Brush3D
 
         public void ClipDrawnRegion(Brush3DProperties properties)
         {
-            if (!TryGetBrushPropertiesIndex(properties, out int index))
-            {
-                Debug.LogError("Aborted ClipDrawnRegion( ), no property found");
-                return;
-            }
+            const string operation = "ClipDrawnRegion";
+            EnsurePropertiesExists(properties, operation, out int index);
+            EnsureNoIntersectingProperties(properties, operation);
+            
             m_computeShader.SetFloat(RenderHellShaderIDs.ClipDrawnRegionIndex, index);
             
             int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
@@ -260,10 +244,7 @@ namespace IngSorre97.RenderHell.Brush3D
             selectionMask.Create();
             selectionMask.name = "SelectionMask";
             
-            m_computeShader.SetTexture(m_updateMaskKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
-            m_computeShader.SetTexture(m_resetDrawnRegionKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
-            m_computeShader.SetTexture(m_clipDrawnRegionKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
-            m_computeShader.SetTexture(m_resetClippedRegionKernel, RenderHellShaderIDs.SelectionMask, selectionMask);
+            ComputeShaderKernels.ForEach(kernel => m_computeShader.SetTexture(kernel, RenderHellShaderIDs.SelectionMask, selectionMask));
             m_material.SetTexture(RenderHellShaderIDs.SelectionMask, selectionMask);
             
             m_computeShader.SetInt(RenderHellShaderIDs.SelectionMaskSize, size);
@@ -277,16 +258,41 @@ namespace IngSorre97.RenderHell.Brush3D
             commandBuffer.DispatchCompute(m_computeShader, m_updateMaskKernel, threadGroup, threadGroup, threadGroup);
         }
 
-        bool TryGetBrushPropertiesIndex(Brush3DProperties properties, out int index)
+        void EnsureNoIntersectingProperties(Brush3DProperties properties, string operation)
+        {
+            if (properties != IntersectingProperties)
+            {
+                return;
+            }
+            Debug.LogError("Aborted ClipDrawnRegion( ), clipping intersecting properties is forbidden");
+            throw new InvalidOperationException($"Aborted {operation}, not a valid operation on Intersecting properties");
+        }
+        
+        void EnsureNoCurrentProperties(Brush3DProperties properties, string operation)
+        {
+            if (properties != m_currentDrawingProperties && properties != m_currentErasingProperties)
+            {
+                return;
+            }
+            throw new InvalidOperationException($"Aborted {operation}, not a valid operation on current properties");
+        }
+
+        void EnsurePropertiesExists(Brush3DProperties properties, string operation, out int index)
+        {
+            index = m_drawingProperties.IndexOf(properties);
+            
+            if (index == -1)
+            {
+                throw new InvalidOperationException($"Aborted {operation}, properties not found");
+            }
+        }
+        
+        void EnsurePropertiesDoNotExists(Brush3DProperties properties, string operation)
         {
             if (m_drawingProperties.Contains(properties))
             {
-                index = m_drawingProperties.IndexOf(properties);
-                return true;
+                throw new InvalidOperationException($"Aborted {operation}, properties already present");
             }
-
-            index = -1;
-            return false;
         }
     }
 }

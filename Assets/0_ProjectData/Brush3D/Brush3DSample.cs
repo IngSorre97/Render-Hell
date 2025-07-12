@@ -21,13 +21,12 @@ namespace IngSorre97.RenderHell.Samples
         [SerializeField] int m_drawingIndex;
         [SerializeField] int m_erasingIndex;
         [Space]
-        [SerializeField] bool m_clipping;
-        [Space]
         [SerializeField] [Range(0.0f, 1.0f)] float m_radius;
         [SerializeField] [Range(0.0f, 1.0f)] float m_outlineThickness;
         [SerializeField] Color m_outlineColor;
         [Space]
         [SerializeField] List<Brush3DProperties> m_brush3DProperties;
+        [SerializeField] int m_removeBrushPropertiesIndex;
         [Space]
         [SerializeField] bool m_resetDrawnRegion;
         [SerializeField] int m_resetDrawnRegionIndex;
@@ -51,6 +50,25 @@ namespace IngSorre97.RenderHell.Samples
         public void UpdateBrushes()
         {
             m_brush3D?.UpdateDrawingProperties();
+        }
+        
+        [ContextMenu("Remove brush")]
+        public void RemoveBrush()
+        {
+            m_brush3D?.RemoveDrawingProperties(m_brush3DProperties[m_removeBrushPropertiesIndex]);
+            m_brush3DProperties.RemoveAt(m_removeBrushPropertiesIndex);
+        }
+
+        [ContextMenu("Start intersecting")]
+        public void StartIntersecting()
+        {
+            m_brush3D?.StartIntersecting();
+        }
+        
+        [ContextMenu("Stop intersecting")]
+        public void StopIntersecting()
+        {
+            m_brush3D?.StopIntersecting();
         }
 
         [ContextMenu("Start drawing")]
@@ -110,6 +128,7 @@ namespace IngSorre97.RenderHell.Samples
         void Update()
         {
             UpdateCursorPosition();
+            
             m_brush3D?.SetRadius(m_radius);
             m_brush3D?.SetOutlineThickness(m_outlineThickness);
             m_brush3D?.SetOutlineColor(m_outlineColor);

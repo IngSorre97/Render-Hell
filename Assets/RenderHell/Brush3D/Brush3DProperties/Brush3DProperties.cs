@@ -21,11 +21,6 @@ namespace IngSorre97.RenderHell.Brush3D
                 RimPower = m_rimPower
             };
         }
-            
-        internal static int GetSize()
-        {
-            return 4 * sizeof(float) + 3 * sizeof(float) + sizeof(float);
-        }
     }
     
     [StructLayout(LayoutKind.Sequential)]

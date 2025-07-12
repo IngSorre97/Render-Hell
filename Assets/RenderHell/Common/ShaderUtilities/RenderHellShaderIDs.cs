@@ -20,5 +20,6 @@ namespace IngSorre97.RenderHell
         public static int BrushProperties { get; } = Shader.PropertyToID("_BrushProperties");
         public static int ResetDrawnRegionIndex { get; } = Shader.PropertyToID("_ResetDrawnRegionIndex");
         public static int ClipDrawnRegionIndex { get; } = Shader.PropertyToID("_ClipDrawnRegionIndex");
+        public static int RemovedIndex { get; } = Shader.PropertyToID("_RemovedIndex");
     }
 }
