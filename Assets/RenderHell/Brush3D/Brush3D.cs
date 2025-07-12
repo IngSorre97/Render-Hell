@@ -4,7 +4,7 @@ namespace IngSorre97.RenderHell.Brush3D
 {
     class Brush3D : MonoBehaviour, IBrush3D
     {
-        const int SELECTION_MASK_SIZE = 256;
+        const int SELECTION_MASK_SIZE = 512;
         
         [SerializeField] ComputeShader m_computeShader;
 
@@ -15,18 +15,20 @@ namespace IngSorre97.RenderHell.Brush3D
         Mesh m_mesh;
         
         Brush3DRenderPass m_renderPass;
+        Brush3DPropertiesManager m_brushPropertiesManager;
 
         void OnDestroy()
         {
             m_renderPass.Dispose();
         }
 
-        public void Setup(MeshRenderer meshRenderer, Mesh mesh)
+        public void Setup(MeshRenderer meshRenderer, Mesh mesh, Brush3DProperties intersectingProperties)
         {
             m_meshRenderer = meshRenderer;
             m_mesh = mesh;
             
             m_renderPass = new Brush3DRenderPass(meshRenderer, m_mesh.bounds, m_computeShader, SELECTION_MASK_SIZE);
+            m_brushPropertiesManager = new Brush3DPropertiesManager(m_renderPass, intersectingProperties);
         }
 
         public void SetPosition(Vector3 pos)
@@ -60,21 +62,15 @@ namespace IngSorre97.RenderHell.Brush3D
             Debug.LogWarning($"Scaled down outline thickness to {radius}");
             SetOutlineThickness(radius);
         }
-
-        public void SetIntersectionActivation(bool active)
+        
+        public void StartIntersecting()
         {
-            m_renderPass.SetIntersectionActivation(active);
+            m_renderPass.StartIntersecting();
         }
 
-        public void SetIntersectionColor(Color color, float rimPower)
+        public void StopIntersecting()
         {
-            if (rimPower < 0.0f)
-            {
-                Debug.LogError("Intersection rim power must be greater than zero");
-                return;
-            }
-            
-            m_renderPass.SetIntersectionColor(color, rimPower);
+            m_renderPass.StopIntersecting();
         }
 
         public void SetOutlineColor(Color color)
@@ -100,40 +96,61 @@ namespace IngSorre97.RenderHell.Brush3D
             m_renderPass.SetOutlineThickness(NormalizeLengthInBoundsExtent(thickness));
         }
 
-        public void SetDrawingActivation(bool active)
+        public void AddDrawingProperties(Brush3DProperties properties)
         {
-            m_renderPass.SetDrawingActivation(active);
-        }
-
-        public void SetDrawingColor(Color color, float rimPower)
-        {
-            if (rimPower < 0.0f)
-            {
-                Debug.LogError("Drawing rim power must be greater than zero");
-                return;
-            }
+            ValidateBrush3DProperties(properties);
             
-            m_renderPass.SetDrawingColor(color, rimPower);
+            m_brushPropertiesManager.AddDrawingProperties(properties);
         }
 
-        public void SetErasingDrawnActivation(bool active)
+        public void UpdateDrawingProperties()
         {
-            m_renderPass.SetErasingDrawnActivation(active);
+            m_brushPropertiesManager.UpdateDrawingProperties();
         }
 
-        public void ResetDrawnRegion()
+        public void RemoveDrawingProperties(Brush3DProperties properties)
         {
-            m_renderPass.ResetDrawnRegion();
+            m_brushPropertiesManager.RemoveDrawingProperties(properties);
         }
 
-        public void SetClippingActivation(bool active)
+        public void StartDrawing(Brush3DProperties properties)
         {
-            m_renderPass.SetClippingActivation(active);
+            m_brushPropertiesManager.StartDrawing(properties);
+        }
+        
+        public void StopDrawing()
+        {
+            m_brushPropertiesManager.StopDrawing();
         }
 
-        public void ClipDrawnRegion()
+        public void StartErasing(Brush3DProperties properties)
         {
-            m_renderPass.ClipDrawnRegion();
+            m_brushPropertiesManager.StartErasing(properties);
+        }
+
+        public void StopErasing()
+        {
+            m_brushPropertiesManager.StopErasing();
+        }
+        
+        public void StartClipping()
+        {
+            m_renderPass.SetClippingIndex(1);
+        }
+
+        public void StopClipping()
+        {
+            m_renderPass.SetClippingIndex(0);
+        }
+
+        public void ResetDrawnRegion(Brush3DProperties properties)
+        {
+            m_brushPropertiesManager.ResetDrawnRegion(properties);
+        }
+
+        public void ClipDrawnRegion(Brush3DProperties properties)
+        {
+            m_brushPropertiesManager.ClipDrawnRegion(properties);
         }
 
         public void ResetClippedRegion()
@@ -145,6 +162,17 @@ namespace IngSorre97.RenderHell.Brush3D
         {
             float boundsExtent = Mathf.Max(m_mesh.bounds.extents.x, m_mesh.bounds.extents.y, m_mesh.bounds.extents.z);
             return length / (boundsExtent * m_meshRenderer.transform.lossyScale.x);
+        }
+
+        static void ValidateBrush3DProperties(Brush3DProperties properties)
+        {
+            if (properties.m_rimPower >= 0.0f)
+            {
+                return;
+            }
+            
+            Debug.LogError("Rim power must be greater than zero");
+            properties.m_rimPower = 0.0f;
         }
     }
 }

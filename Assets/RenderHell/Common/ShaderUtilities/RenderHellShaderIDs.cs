@@ -12,14 +12,14 @@ namespace IngSorre97.RenderHell
         public static int BoundsMin { get; } = Shader.PropertyToID("_BoundsMin");
         public static int BoundsMax { get; } = Shader.PropertyToID("_BoundsMax");
         public static int Intersecting { get; } = Shader.PropertyToID("_Intersecting");
-        public static int Drawing { get; } = Shader.PropertyToID("_Drawing");
+        public static int DrawingIndex { get; } = Shader.PropertyToID("_DrawingIndex");
         public static int Clipping { get; } = Shader.PropertyToID("_Clipping");
-        public static int IntersectingColor { get; } = Shader.PropertyToID("_IntersectingColor");
-        public static int IntersectingRimPower { get; } = Shader.PropertyToID("_IntersectingRimPower");
-        public static int DrawingColor { get; } = Shader.PropertyToID("_DrawingColor");
-        public static int DrawingRimPower { get; } = Shader.PropertyToID("_DrawingRimPower");
         public static int OutlineColor { get; } = Shader.PropertyToID("_OutlineColor");
         public static int OutlineThickness { get; } = Shader.PropertyToID("_OutlineThickness");
-        public static int ErasingDrawn { get; } = Shader.PropertyToID("_ErasingDrawn");
+        public static int ErasingIndex { get; } = Shader.PropertyToID("_ErasingIndex");
+        public static int BrushProperties { get; } = Shader.PropertyToID("_BrushProperties");
+        public static int ResetDrawnRegionIndex { get; } = Shader.PropertyToID("_ResetDrawnRegionIndex");
+        public static int ClipDrawnRegionIndex { get; } = Shader.PropertyToID("_ClipDrawnRegionIndex");
+        public static int RemovedIndex { get; } = Shader.PropertyToID("_RemovedIndex");
     }
 }
