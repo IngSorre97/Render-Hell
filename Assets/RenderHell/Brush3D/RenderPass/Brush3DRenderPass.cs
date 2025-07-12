@@ -81,11 +81,13 @@ namespace IngSorre97.RenderHell.Brush3D
         public void StartIntersecting()
         {
             m_computeShader.SetFloat(RenderHellShaderIDs.Intersecting, 1.0f);
+            m_material.SetFloat(RenderHellShaderIDs.Intersecting, 1.0f);
         }
         
         public void StopIntersecting()
         {
             m_computeShader.SetFloat(RenderHellShaderIDs.Intersecting, 0.0f);
+            m_material.SetFloat(RenderHellShaderIDs.Intersecting, 0.0f);
         }
 
         public void SetOutlineColor(Color color)

@@ -23,8 +23,7 @@ namespace IngSorre97.RenderHell.Brush3D
         
         public void AddDrawingProperties(Brush3DProperties properties)
         {
-            const string operation = "AddDrawingProperties";
-            EnsurePropertiesDoNotExists(properties, operation);
+            if (DoPropertiesExists(properties, out int _)) return;
             
             m_drawingProperties.Add(properties);
             
@@ -33,8 +32,9 @@ namespace IngSorre97.RenderHell.Brush3D
         
         public void RemoveDrawingProperties(Brush3DProperties properties)
         {
+            if (!DoPropertiesExists(properties, out int removedIndex)) return;
+            
             const string operation = "RemoveDrawingProperties";
-            EnsurePropertiesExists(properties, operation, out int removedIndex);
             EnsureNoIntersectingProperties(properties, operation);
             EnsureNoCurrentProperties(properties, operation);
 
@@ -63,8 +63,9 @@ namespace IngSorre97.RenderHell.Brush3D
 
         public void StartDrawing(Brush3DProperties properties)
         {
+            if (!DoPropertiesExists(properties, out int index)) return;
+            
             const string operation = "StartDrawing";
-            EnsurePropertiesExists(properties, operation, out int index);
             EnsureNoIntersectingProperties(properties, operation);
             
             m_currentDrawingProperties = properties;
@@ -79,8 +80,9 @@ namespace IngSorre97.RenderHell.Brush3D
         
         public void StartErasing(Brush3DProperties properties)
         {
+            if (!DoPropertiesExists(properties, out int index)) return;
+            
             const string operation = "StartErasing";
-            EnsurePropertiesExists(properties, operation, out int index);
             EnsureNoIntersectingProperties(properties, operation);
             
             m_currentErasingProperties = properties;
@@ -95,8 +97,9 @@ namespace IngSorre97.RenderHell.Brush3D
         
         public void ResetDrawnRegion(Brush3DProperties properties)
         {
+            if (!DoPropertiesExists(properties, out int index)) return;
+            
             const string operation = "ResetDrawnRegion";
-            EnsurePropertiesExists(properties, operation, out int index);
             EnsureNoIntersectingProperties(properties, operation);
             
             m_renderPass.ResetDrawnRegion(index);
@@ -104,8 +107,9 @@ namespace IngSorre97.RenderHell.Brush3D
 
         public void ClipDrawnRegion(Brush3DProperties properties)
         {
+            if (!DoPropertiesExists(properties, out int index)) return;
+            
             const string operation = "ClipDrawnRegion";
-            EnsurePropertiesExists(properties, operation, out int index);
             EnsureNoIntersectingProperties(properties, operation);
             
             m_renderPass.ClipDrawnRegion(index);
@@ -129,23 +133,11 @@ namespace IngSorre97.RenderHell.Brush3D
             }
             throw new InvalidOperationException($"Aborted {operation}, not a valid operation on current properties");
         }
-
-        void EnsurePropertiesExists(Brush3DProperties properties, string operation, out int index)
+        
+        bool DoPropertiesExists(Brush3DProperties properties, out int index)
         {
             index = m_drawingProperties.IndexOf(properties);
-            
-            if (index == -1)
-            {
-                throw new InvalidOperationException($"Aborted {operation}, properties not found");
-            }
-        }
-        
-        void EnsurePropertiesDoNotExists(Brush3DProperties properties, string operation)
-        {
-            if (m_drawingProperties.Contains(properties))
-            {
-                throw new InvalidOperationException($"Aborted {operation}, properties already present");
-            }
+            return index != -1;
         }
     }
 }

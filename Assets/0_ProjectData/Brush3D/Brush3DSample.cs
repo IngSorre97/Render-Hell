@@ -55,6 +55,7 @@ namespace IngSorre97.RenderHell.Samples
         [ContextMenu("Remove brush")]
         public void RemoveBrush()
         {
+            if (m_removeBrushPropertiesIndex == 0) return;
             m_brush3D?.RemoveDrawingProperties(m_brush3DProperties[m_removeBrushPropertiesIndex]);
             m_brush3DProperties.RemoveAt(m_removeBrushPropertiesIndex);
         }
@@ -74,6 +75,7 @@ namespace IngSorre97.RenderHell.Samples
         [ContextMenu("Start drawing")]
         public void StartDrawing()
         {
+            if (m_drawingIndex == 0) return;
             m_brush3D?.StartDrawing(m_brush3DProperties[m_drawingIndex]);
         }
         
@@ -98,6 +100,7 @@ namespace IngSorre97.RenderHell.Samples
         [ContextMenu("Start erasing")]
         public void StartErasing()
         {
+            if (m_erasingIndex == 0) return;
             m_brush3D?.StartErasing(m_brush3DProperties[m_erasingIndex]);
         }
         

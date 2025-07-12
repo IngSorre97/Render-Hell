@@ -64,8 +64,8 @@ brushProperties GetBrush3DStoredProperties(float3 normalizedUV, float4 materialA
     float storedIndex = _SelectionMask[id];
     clip(storedIndex);
 
-    float isInsideCursorSphere = IsInsideCursorSphere(normalizedUV);
-    float isInsideCursorOutline = IsInsideCursorOutline(normalizedUV, isInsideCursorSphere);
+    float isInsideCursorSphere = and(_Intersecting, IsInsideCursorSphere(normalizedUV));
+    float isInsideCursorOutline = and(_Intersecting, IsInsideCursorOutline(normalizedUV, isInsideCursorSphere));
     
     brushProperties voxelProperties;
     voxelProperties.Albedo = ComputeBrush3DAlbedo(storedIndex, materialAlbedo, isInsideCursorSphere, isInsideCursorOutline);
