@@ -10,7 +10,7 @@ using Object = UnityEngine.Object;
 
 namespace IngSorre97.RenderHell.Brush3D
 {
-    class Brush3DRenderPass : BaseRenderPass, IBrush3D
+    class Brush3DRenderPass : BaseRenderPass
     {
         const RenderPassEvent RENDER_PASS_EVENT = RenderPassEvent.BeforeRenderingTransparents;
         
@@ -30,13 +30,9 @@ namespace IngSorre97.RenderHell.Brush3D
             m_removeBrushPropertiesKernel
         };
         
-        readonly List<Brush3DProperties> m_drawingProperties;
         ComputeBuffer m_drawingPropertiesBuffer;
-        Brush3DProperties m_currentDrawingProperties;
-        Brush3DProperties m_currentErasingProperties;
-        Brush3DProperties IntersectingProperties => m_drawingProperties[0];
 
-        public Brush3DRenderPass(MeshRenderer meshRenderer, Bounds bounds, ComputeShader computeShader, int selectionMaskSize, Brush3DProperties intersectingProperties)
+        public Brush3DRenderPass(MeshRenderer meshRenderer, Bounds bounds, ComputeShader computeShader, int selectionMaskSize)
             : base("Brush3DPass", RENDER_PASS_EVENT, Camera.main)
         {
             m_computeShader = Object.Instantiate(computeShader);
@@ -49,8 +45,6 @@ namespace IngSorre97.RenderHell.Brush3D
             m_removeBrushPropertiesKernel = m_computeShader.FindKernel("RemoveBrushProperties");
 
             m_material = meshRenderer.material;
-            m_drawingProperties = new List<Brush3DProperties>{intersectingProperties};
-            UpdateDrawingProperties();
             
             CreateSelectionMask(selectionMaskSize);
             
@@ -104,19 +98,8 @@ namespace IngSorre97.RenderHell.Brush3D
             m_material.SetFloat(RenderHellShaderIDs.OutlineThickness, normalizedOutlineThickness);
         }
 
-        public void AddDrawingProperties(Brush3DProperties properties)
+        public void UpdateDrawingProperties(Brush3DPropertiesStruct[] properties)
         {
-            const string operation = "AddDrawingProperties";
-            EnsurePropertiesDoNotExists(properties, operation);
-            
-            m_drawingProperties.Add(properties);
-            
-            UpdateDrawingProperties();
-        }
-
-        public void UpdateDrawingProperties()
-        {
-            Brush3DPropertiesStruct[] properties = m_drawingProperties.Select(dp => dp.ToStruct()).ToArray();
             var newDrawingPropertiesBuffer = new ComputeBuffer(properties.Length, Marshal.SizeOf(typeof(Brush3DPropertiesStruct)));
             newDrawingPropertiesBuffer.name = "Brush3DPropertiesBuffer";
             newDrawingPropertiesBuffer.SetData(properties);
@@ -127,105 +110,43 @@ namespace IngSorre97.RenderHell.Brush3D
             m_drawingPropertiesBuffer?.Dispose();
             m_drawingPropertiesBuffer = newDrawingPropertiesBuffer;
         }
-
-        public void RemoveDrawingProperties(Brush3DProperties properties)
+        
+        public void RemoveDrawingProperties(int index)
         {
-            const string operation = "RemoveDrawingProperties";
-            EnsurePropertiesExists(properties, operation, out int removedIndex);
-            EnsureNoIntersectingProperties(properties, operation);
-            EnsureNoCurrentProperties(properties, operation);
-
-            int drawIndex = m_drawingProperties.IndexOf(m_currentDrawingProperties);
-            if (drawIndex != -1 && drawIndex > removedIndex)
-            {
-                m_computeShader.SetFloat(RenderHellShaderIDs.DrawingIndex, drawIndex - 1);
-            }
-            
-            int eraseIndex = m_drawingProperties.IndexOf(m_currentErasingProperties);
-            if (eraseIndex != -1 && eraseIndex > removedIndex)
-            {
-                m_computeShader.SetFloat(RenderHellShaderIDs.ErasingIndex, eraseIndex - 1);
-            }
-            
-            m_drawingProperties.RemoveAt(removedIndex);
-            
-            m_computeShader.SetFloat(RenderHellShaderIDs.RemovedIndex, removedIndex);
-            int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
-            m_computeShader.Dispatch(m_removeBrushPropertiesKernel, threadGroup, threadGroup, threadGroup);
-            
-            UpdateDrawingProperties();
+            m_computeShader.SetFloat(RenderHellShaderIDs.RemovedIndex, index);
+            DispatchOnMaskSize(m_removeBrushPropertiesKernel);
         }
 
-        public void StartDrawing(Brush3DProperties properties)
+        public void SetDrawingIndex(int index)
         {
-            const string operation = "StartDrawing";
-            EnsurePropertiesExists(properties, operation, out int index);
-            EnsureNoIntersectingProperties(properties, operation);
-            
-            m_currentDrawingProperties = properties;
             m_computeShader.SetFloat(RenderHellShaderIDs.DrawingIndex, index);
         }
-
-        public void StopDrawing()
-        {
-            m_currentDrawingProperties = null;
-            m_computeShader.SetFloat(RenderHellShaderIDs.DrawingIndex, 0.0f);
-        }
         
-        public void StartErasing(Brush3DProperties properties)
+        public void SetErasingIndex(int index)
         {
-            const string operation = "StartErasing";
-            EnsurePropertiesExists(properties, operation, out int index);
-            EnsureNoIntersectingProperties(properties, operation);
-            
-            m_currentErasingProperties = properties;
             m_computeShader.SetFloat(RenderHellShaderIDs.ErasingIndex, index);
         }
-
-        public void StopErasing()
+        
+        public void SetClippingIndex(int index)
         {
-            m_currentErasingProperties = null;
-            m_computeShader.SetFloat(RenderHellShaderIDs.ErasingIndex, 0.0f);
-        }
-
-        public void StartClipping()
-        {
-            m_computeShader.SetFloat(RenderHellShaderIDs.Clipping, 1.0f);
-        }
-
-        public void StopClipping()
-        {
-            m_computeShader.SetFloat(RenderHellShaderIDs.Clipping, 0.0f);
+            m_computeShader.SetFloat(RenderHellShaderIDs.Clipping, index);
         }
         
-        public void ResetDrawnRegion(Brush3DProperties properties)
+        public void ResetDrawnRegion(int index)
         {
-            const string operation = "ResetDrawnRegion";
-            EnsurePropertiesExists(properties, operation, out int index);
-            EnsureNoIntersectingProperties(properties, operation);
-            
             m_computeShader.SetFloat(RenderHellShaderIDs.ResetDrawnRegionIndex, index);
-            
-            int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
-            m_computeShader.Dispatch(m_resetDrawnRegionKernel, threadGroup, threadGroup, threadGroup);
+            DispatchOnMaskSize(m_resetDrawnRegionKernel);
         }
 
-        public void ClipDrawnRegion(Brush3DProperties properties)
+        public void ClipDrawnRegion(int index)
         {
-            const string operation = "ClipDrawnRegion";
-            EnsurePropertiesExists(properties, operation, out int index);
-            EnsureNoIntersectingProperties(properties, operation);
-            
             m_computeShader.SetFloat(RenderHellShaderIDs.ClipDrawnRegionIndex, index);
-            
-            int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
-            m_computeShader.Dispatch(m_clipDrawnRegionKernel, threadGroup, threadGroup, threadGroup);
+            DispatchOnMaskSize(m_clipDrawnRegionKernel);
         }
 
         public void ResetClippedRegion()
         {
-            int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
-            m_computeShader.Dispatch(m_resetClippedRegionKernel, threadGroup, threadGroup, threadGroup);
+            DispatchOnMaskSize(m_resetClippedRegionKernel);
         }
 
         void CreateSelectionMask(int size)
@@ -251,48 +172,17 @@ namespace IngSorre97.RenderHell.Brush3D
             m_material.SetInt(RenderHellShaderIDs.SelectionMaskSize, size);
         }
 
+        void DispatchOnMaskSize(int kernel)
+        {
+            int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
+            m_computeShader.Dispatch(kernel, threadGroup, threadGroup, threadGroup);
+        }
+
         protected override void OnPassExecute(CommandBuffer commandBuffer, ScriptableRenderContext context, ref RenderingData renderingData)
         {
             int threadGroup = Mathf.CeilToInt((float) m_selectionMaskSize / 8);
             
             commandBuffer.DispatchCompute(m_computeShader, m_updateMaskKernel, threadGroup, threadGroup, threadGroup);
-        }
-
-        void EnsureNoIntersectingProperties(Brush3DProperties properties, string operation)
-        {
-            if (properties != IntersectingProperties)
-            {
-                return;
-            }
-            Debug.LogError("Aborted ClipDrawnRegion( ), clipping intersecting properties is forbidden");
-            throw new InvalidOperationException($"Aborted {operation}, not a valid operation on Intersecting properties");
-        }
-        
-        void EnsureNoCurrentProperties(Brush3DProperties properties, string operation)
-        {
-            if (properties != m_currentDrawingProperties && properties != m_currentErasingProperties)
-            {
-                return;
-            }
-            throw new InvalidOperationException($"Aborted {operation}, not a valid operation on current properties");
-        }
-
-        void EnsurePropertiesExists(Brush3DProperties properties, string operation, out int index)
-        {
-            index = m_drawingProperties.IndexOf(properties);
-            
-            if (index == -1)
-            {
-                throw new InvalidOperationException($"Aborted {operation}, properties not found");
-            }
-        }
-        
-        void EnsurePropertiesDoNotExists(Brush3DProperties properties, string operation)
-        {
-            if (m_drawingProperties.Contains(properties))
-            {
-                throw new InvalidOperationException($"Aborted {operation}, properties already present");
-            }
         }
     }
 }

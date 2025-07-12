@@ -15,6 +15,7 @@ namespace IngSorre97.RenderHell.Brush3D
         Mesh m_mesh;
         
         Brush3DRenderPass m_renderPass;
+        Brush3DPropertiesManager m_brushPropertiesManager;
 
         void OnDestroy()
         {
@@ -26,8 +27,8 @@ namespace IngSorre97.RenderHell.Brush3D
             m_meshRenderer = meshRenderer;
             m_mesh = mesh;
             
-            m_renderPass = new Brush3DRenderPass(meshRenderer, m_mesh.bounds, m_computeShader, SELECTION_MASK_SIZE, intersectingProperties);
-            m_renderPass.StartIntersecting();
+            m_renderPass = new Brush3DRenderPass(meshRenderer, m_mesh.bounds, m_computeShader, SELECTION_MASK_SIZE);
+            m_brushPropertiesManager = new Brush3DPropertiesManager(m_renderPass, intersectingProperties);
         }
 
         public void SetPosition(Vector3 pos)
@@ -99,57 +100,57 @@ namespace IngSorre97.RenderHell.Brush3D
         {
             ValidateBrush3DProperties(properties);
             
-            m_renderPass.AddDrawingProperties(properties);
+            m_brushPropertiesManager.AddDrawingProperties(properties);
         }
 
         public void UpdateDrawingProperties()
         {
-            m_renderPass.UpdateDrawingProperties();
+            m_brushPropertiesManager.UpdateDrawingProperties();
         }
 
         public void RemoveDrawingProperties(Brush3DProperties properties)
         {
-            m_renderPass.RemoveDrawingProperties(properties);
+            m_brushPropertiesManager.RemoveDrawingProperties(properties);
         }
 
         public void StartDrawing(Brush3DProperties properties)
         {
-            m_renderPass.StartDrawing(properties);
+            m_brushPropertiesManager.StartDrawing(properties);
         }
         
         public void StopDrawing()
         {
-            m_renderPass.StopDrawing();
+            m_brushPropertiesManager.StopDrawing();
         }
 
         public void StartErasing(Brush3DProperties properties)
         {
-            m_renderPass.StartErasing(properties);
+            m_brushPropertiesManager.StartErasing(properties);
         }
 
         public void StopErasing()
         {
-            m_renderPass.StopErasing();
+            m_brushPropertiesManager.StopErasing();
         }
         
         public void StartClipping()
         {
-            m_renderPass.StartClipping();
+            m_renderPass.SetClippingIndex(1);
         }
 
         public void StopClipping()
         {
-            m_renderPass.StopClipping();
+            m_renderPass.SetClippingIndex(0);
         }
 
         public void ResetDrawnRegion(Brush3DProperties properties)
         {
-            m_renderPass.ResetDrawnRegion(properties);
+            m_brushPropertiesManager.ResetDrawnRegion(properties);
         }
 
         public void ClipDrawnRegion(Brush3DProperties properties)
         {
-            m_renderPass.ClipDrawnRegion(properties);
+            m_brushPropertiesManager.ClipDrawnRegion(properties);
         }
 
         public void ResetClippedRegion()

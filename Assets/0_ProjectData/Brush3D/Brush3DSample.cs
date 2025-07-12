@@ -123,6 +123,8 @@ namespace IngSorre97.RenderHell.Samples
             {
                 m_brush3D.AddDrawingProperties(m_brush3DProperties[i]);
             }
+            
+            m_brush3D.StartIntersecting();
         }
 
         void Update()
