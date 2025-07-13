@@ -2,7 +2,7 @@
 
 namespace IngSorre97.RenderHell
 {
-    public static class RenderHellShaderIDs
+    static class RenderHellShaderIDs
     {
         public static int Initialized { get; } = Shader.PropertyToID("_Initialized");
         public static int SelectionMask { get; } = Shader.PropertyToID("_SelectionMask");

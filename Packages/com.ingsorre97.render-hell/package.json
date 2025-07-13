@@ -1,0 +1,40 @@
+{
+  "name": "com.ingsorre97.render-hell",
+  "version": "0.0.8",
+  "displayName": "Render Hell",
+  "description": "A Unity project designed to test my HLSL skills and your GPU patience. ",
+  "unity": "2022.3",
+  "unityRelease": "15f1",
+  "documentationUrl": "https://openupm.com/packages/com.studio23.ss2.{package_name}/",
+  "licensesUrl": "https://opensource.org/license/mit/",
+  "scopedRegistries":  [
+    {
+      "name": "Render Hell",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.studio23.ss2"
+      ]
+    }], 
+  "dependencies": {
+    "com.unity.render-pipelines.universal": "14.0.9"
+ },
+ "keywords": [
+    "Rendering",
+    "URP"
+  ],
+"samples": [
+    {
+      "displayName": "Brush3D sample",
+      "description": "A small sample configured with MRTK to demonstrate 3D capabilities of the Brush3D.",
+      "path": "Samples~/Brush3D"
+    }
+  ],  
+"repository": {
+    "type": "git",
+    "url": "https://github.com/IngSorre97/Render-Hell.git"    
+  },
+  "license": "MIT",  
+  "author": {
+    "name": "IngSorre97"
+  }
+}
