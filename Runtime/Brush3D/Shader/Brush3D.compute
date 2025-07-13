@@ -1,0 +1,90 @@
+// ReSharper disable CppInconsistentNaming
+#pragma kernel UpdateMask
+#pragma kernel ResetDrawnRegion
+#pragma kernel ClipDrawnRegion
+#pragma kernel ResetClippedRegion
+#pragma kernel RemoveBrushProperties
+
+#ifdef _ENABLE_D3D11_SYMBOLS
+#pragma enable_d3d11_debug_symbols
+#endif
+
+#include "Packages/com.ingsorre97.render-hell/Runtime/Brush3D/Shader/Brush3DCommon.cginc"
+
+RWTexture3D<float> _SelectionMask;
+
+float _ResetDrawnRegionIndex;
+float _ClipDrawnRegionIndex;
+float _RemovedIndex;
+
+[numthreads(8,8,8)]
+void UpdateMask (uint3 id : SV_DispatchThreadID)
+{
+    if (ClipId(id, _SelectionMaskSize) || when_eq(0.0f, _Intersecting))
+    {
+        return;
+    }
+    
+    float storedIndex = _SelectionMask[id];
+    float4 newIndex = lerp(storedIndex, _DrawingIndex, IsDrawing());
+    newIndex = lerp(newIndex, _ClipIndex, _Clipping);
+    newIndex = lerp(newIndex, _ClipIndex, IsClipped(storedIndex));
+    newIndex = lerp(newIndex, _NoIndex, and(IsErasing(), when_eq(storedIndex, _ErasingIndex)));
+
+    float3 normalizedPos = float3(id.x / (float) _SelectionMaskSize, id.y / (float) _SelectionMaskSize, id.z / (float) _SelectionMaskSize);
+    
+    float isInsideCursorSphere = IsInsideCursorSphere(normalizedPos);
+    _SelectionMask[id] = lerp(storedIndex, newIndex, isInsideCursorSphere);
+}
+
+[numthreads(8,8,8)]
+void ResetDrawnRegion (uint3 id : SV_DispatchThreadID)
+{
+    if (ClipId(id, _SelectionMaskSize))
+    {
+        return;
+    }
+    
+    float storedIndex = _SelectionMask[id];
+    _SelectionMask[id] = lerp(storedIndex, _NoIndex, when_eq(storedIndex, _ResetDrawnRegionIndex));
+}
+
+[numthreads(8,8,8)]
+void ClipDrawnRegion (uint3 id : SV_DispatchThreadID)
+{
+    if (ClipId(id, _SelectionMaskSize))
+    {
+        return;
+    }
+    
+    float storedIndex = _SelectionMask[id];
+    _SelectionMask[id] = lerp(storedIndex, _ClipIndex, when_eq(storedIndex, _ClipDrawnRegionIndex));
+}
+
+[numthreads(8,8,8)]
+void ResetClippedRegion (uint3 id : SV_DispatchThreadID)
+{
+    if (ClipId(id, _SelectionMaskSize))
+    {
+        return;
+    }
+    
+    float storedIndex = _SelectionMask[id];
+    _SelectionMask[id] = lerp(storedIndex, _NoIndex, IsClipped(storedIndex));
+}
+
+[numthreads(8,8,8)]
+void RemoveBrushProperties (uint3 id : SV_DispatchThreadID)
+{
+    if (ClipId(id, _SelectionMaskSize))
+    {
+        return;
+    }
+
+    float storedIndex = _SelectionMask[id];
+    float shouldDecrementIndex = when_gt(storedIndex, _RemovedIndex);
+    
+    float newIndex = lerp(storedIndex, storedIndex - 1, shouldDecrementIndex);
+    newIndex = lerp(newIndex, _NoIndex, when_eq(storedIndex, _RemovedIndex));
+    _SelectionMask[id] = newIndex;
+}
