@@ -1,0 +1,35 @@
+name: Push On Develop
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  rename-samples-folder:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Push Branch and Tags
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        
+        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/IngSorre97/Render-Hell.git
+
+        git fetch origin
+        git subtree push --prefix=Packages/com.ingsorre97.render-hell origin upm
+        git checkout upm
+        if [[ -d "Samples" ]]; then
+          git mv Samples Samples~
+          rm -f Samples.meta
+          git commit -m "Samples folder renamed without ~"
+          git push HEAD:upm
+          echo "Samples folder renamed without ~"
+        fi     
