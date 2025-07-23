@@ -5,8 +5,11 @@ on:
     branches:
       - '**'
 
+permissions:
+  contents: write
+
 jobs:
-  rename-samples-folder:
+  update-upm-branch:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
@@ -16,13 +19,10 @@ jobs:
 
     - name: Push Branch and Tags
       env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        GH_TOKEN: ${{ secrets.TOKEN }}
       run: |
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
-        
-        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/IngSorre97/Render-Hell.git
-
+        curl -H "Authorization: Bearer $GH_TOKEN" \
+               https://api.github.com/repos/${{ github.repository }}
         git fetch origin
         git subtree push --prefix=Packages/com.ingsorre97.render-hell origin upm
         git checkout upm
@@ -32,4 +32,4 @@ jobs:
           git commit -m "Samples folder renamed without ~"
           git push HEAD:upm
           echo "Samples folder renamed without ~"
-        fi     
+        fi
