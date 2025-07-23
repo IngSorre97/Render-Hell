@@ -17,6 +17,11 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Set Git identity
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
     - name: Push Branch and Tags
       env:
         GH_TOKEN: ${{ secrets.TOKEN }}
@@ -30,6 +35,8 @@ jobs:
           git mv Samples Samples~
           rm -f Samples.meta
           git commit -m "Samples folder renamed without ~"
-          git push HEAD:upm
+          git push origin HEAD
           echo "Samples folder renamed without ~"
+        else
+          echo "Samples folder already in correct format"
         fi
