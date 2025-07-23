@@ -26,11 +26,6 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.TOKEN }}
       run: |
-        curl -H "Authorization: Bearer $GH_TOKEN" \
-               https://api.github.com/repos/${{ github.repository }}
-        git fetch origin
-        git subtree push --prefix=Packages/com.ingsorre97.render-hell origin upm
-        git checkout upm
         if [[ -d "Samples" ]]; then
           git mv Samples Samples~
           rm -f Samples.meta
@@ -40,3 +35,9 @@ jobs:
         else
           echo "Samples folder already in correct format"
         fi
+
+        git fetch origin
+        git subtree push --prefix=Packages/com.ingsorre97.render-hell origin upm
+        git checkout upm
+        
+          
