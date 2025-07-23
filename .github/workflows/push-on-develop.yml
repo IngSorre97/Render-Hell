@@ -3,7 +3,7 @@ name: Push On Develop
 on:
   push:
     branches:
-      - '**'
+      - develop
 
 permissions:
   contents: write
