@@ -1,5 +1,13 @@
 {
   "dependencies": {
+    "com.ingsorre97.render-hell": {
+      "version": "file:com.ingsorre97.render-hell",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.render-pipelines.universal": "14.0.9"
+      }
+    },
     "com.microsoft.mixedreality.openxr": {
       "version": "1.10.0",
       "depth": 0,

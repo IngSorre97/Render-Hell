@@ -10,6 +10,7 @@
     }
   ],
   "dependencies": {
+    "com.ingsorre97.render-hell": "file:../Packages/com.ingsorre97.render-hell",
     "com.microsoft.mixedreality.openxr": "1.10.0",
     "com.microsoft.mixedreality.toolkit.foundation": "2.8.3",
     "com.microsoft.mixedreality.toolkit.testutilities": "2.8.3",

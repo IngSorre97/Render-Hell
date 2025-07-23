@@ -5,9 +5,11 @@
 #pragma kernel ResetClippedRegion
 #pragma kernel RemoveBrushProperties
 
+#ifdef _ENABLE_D3D11_SYMBOLS
 #pragma enable_d3d11_debug_symbols
+#endif
 
-#include "Assets/RenderHell/Brush3D/Shader/Brush3DCommon.cginc"
+#include "Packages/com.ingsorre97.render-hell/Runtime/Brush3D/Shader/Brush3DCommon.cginc"
 
 RWTexture3D<float> _SelectionMask;
 

@@ -3,6 +3,7 @@ Shader "UX/Standard-HLSL"
     Properties
     {
         // Main maps.
+        [Toggle(_ENABLE_D3D11_SYMBOLS)] _EnableD3D11Symbols("Enable d3d11 symbols", Float) = 0.0
         _Color("Color", Color) = (1.0, 1.0, 1.0, 1.0)
         _MainTex("Albedo", 2D) = "white" {}
         [Enum(AlbedoAlphaMode)] _AlbedoAlphaMode("Albedo Alpha Mode", Float) = 0 // "Transparency"
@@ -133,8 +134,6 @@ Shader "UX/Standard-HLSL"
             #pragma vertex vert
             #pragma fragment frag
 
-            #define _RIM_LIGHT
-
             #pragma multi_compile_instancing
             #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile _ UNITY_UI_CLIP_RECT
@@ -143,6 +142,7 @@ Shader "UX/Standard-HLSL"
             #pragma multi_compile _ _CLIPPING_SPHERE
             #pragma multi_compile _ _CLIPPING_BOX
             #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON
+            #pragma shader_feature _ENABLE_D3D11_SYMBOLS
             #pragma shader_feature _DISABLE_ALBEDO_MAP
             #pragma shader_feature _ _METALLIC_TEXTURE_ALBEDO_CHANNEL_A _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
             #pragma shader_feature _CHANNEL_MAP
@@ -179,11 +179,15 @@ Shader "UX/Standard-HLSL"
             #pragma shader_feature _IRIDESCENCE
             #pragma shader_feature _ENVIRONMENT_COLORING
             #pragma shader_feature _IGNORE_Z_SCALE
+            
+#ifdef _ENABLE_D3D11_SYMBOLS
+            #pragma enable_d3d11_debug_symbols
+#endif
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-            #include "Assets/RenderHell/Brush3D/Shader/Brush3D.cginc"
+            #include "Packages/com.ingsorre97.render-hell/Runtime/Brush3D/Shader/Brush3D.cginc"
 
 /* ******************************************** #DEFINE ************************************************************* */
 

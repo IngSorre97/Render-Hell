@@ -1,9 +1,11 @@
 #ifndef __BRUSH3D__
 #define __BRUSH3D__
 
-#include "Assets/RenderHell/Brush3D/Shader/Brush3DCommon.cginc"
+#include "Packages/com.ingsorre97.render-hell/Runtime/Brush3D/Shader/Brush3DCommon.cginc"
 
+#ifdef _ENABLE_D3D11_SYMBOLS
 #pragma enable_d3d11_debug_symbols
+#endif
 
 float _Initialized;
 

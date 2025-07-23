@@ -1,0 +1,42 @@
+name: Push On Develop
+
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: write
+
+jobs:
+  update-upm-branch:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set Git identity
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Push Branch and Tags
+      env:
+        GH_TOKEN: ${{ secrets.TOKEN }}
+      run: |
+        curl -H "Authorization: Bearer $GH_TOKEN" \
+               https://api.github.com/repos/${{ github.repository }}
+        git fetch origin
+        git subtree push --prefix=Packages/com.ingsorre97.render-hell origin upm
+        git checkout upm
+        if [[ -d "Samples" ]]; then
+          git mv Samples Samples~
+          rm -f Samples.meta
+          git commit -m "Samples folder renamed without ~"
+          git push origin HEAD
+          echo "Samples folder renamed without ~"
+        else
+          echo "Samples folder already in correct format"
+        fi
