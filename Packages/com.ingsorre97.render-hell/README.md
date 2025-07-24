@@ -1,2 +1,2 @@
 ## README placeholder
-This is the first ReadMe commit
+This is the first README commit
