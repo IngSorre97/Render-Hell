@@ -1,4 +1,2 @@
 ## README placeholder
-This is the first ReadMe commit
-
-Added placeholder to package README
+This is the first README commit

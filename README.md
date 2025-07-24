@@ -32,5 +32,3 @@ Leave a persistent color on the mesh, useful to mark particular 3D sections
 Hide certain parts of the mesh, useful to clean a chaotic mesh or to highlight other parts
 
 ### *And who knows what the future may have in store for us...*
-
-Added placeholder to main README
