@@ -21,25 +21,40 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
+        git fetch origin
 
-    - name: Rename Samples folder if needed
+    - name: Rename Samples folder on develop
       run: |
+        git checkout develop
+
+        if [[ -d "Packages/com.ingsorre97.render-hell/Samples" ]]; then
+          git mv Packages/com.ingsorre97.render-hell/Samples Packages/com.ingsorre97.render-hell/Samples~
+          rm -f Packages/com.ingsorre97.render-hell/Samples.meta
+          git commit -m "Samples folder renamed without ~"
+          git push origin HEAD
+          echo "Samples folder on DEVELOP renamed without ~"
+        else
+          echo "Samples folder on DEVELOP already in correct format"
+        fi
+
+    - name: Push Changes to UPM branch subtree
+      run: |
+        git checkout develop
+
+        git subtree split --prefix=Packages/com.ingsorre97.render-hell -b develop-upm-split
+        git checkout upm
+        git merge --squash --strategy-option=theirs develop-upm-split
+
         if [[ -d "Samples" ]]; then
           git mv Samples Samples~
           rm -f Samples.meta
-          git commit -m "Samples folder renamed without ~"
-          git push origin HEAD
-          echo "Samples folder renamed without ~"
+          git add .
+          echo "Samples folder on UPM renamed without ~"
         else
-          echo "Samples folder already in correct format"
+          echo "Samples folder on UPM already in correct format"
         fi
 
-    - name: Push Branch and Tags
-      run: |
-        git subtree split --prefix=Packages/com.ingsorre97.render-hell -b develop-upm-split
-        git checkout upm
-        git merge --squash develop-upm-split
-        git commit -m "Updated UPM package"
+        git commit --allow-empty -m "Updated UPM package"
         git push origin HEAD
         git branch -D develop-upm-split
         
