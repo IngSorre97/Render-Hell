@@ -22,9 +22,7 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
 
-    - name: Push Branch and Tags
-      env:
-        GH_TOKEN: ${{ secrets.TOKEN }}
+    - name: Rename Samples folder if needed
       run: |
         if [[ -d "Samples" ]]; then
           git mv Samples Samples~
@@ -36,8 +34,13 @@ jobs:
           echo "Samples folder already in correct format"
         fi
 
-        git fetch origin
-        git subtree push --prefix=Packages/com.ingsorre97.render-hell origin upm
+    - name: Push Branch and Tags
+      run: |
+        git subtree split --prefix=Packages/com.ingsorre97.render-hell -b develop-upm-split
         git checkout upm
+        git merge --squash develop-upm-split
+        git commit -m "Updated UPM package"
+        git push origin HEAD
+        git branch -D develop-upm-split
         
           
