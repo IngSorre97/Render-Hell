@@ -1,0 +1,49 @@
+name: Verify Pull Request
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, reopened, synchronize]
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Get base branch version
+        id: base
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          BASE_VERSION=$(git show origin/${{ github.event.pull_request.base.ref }}:Packages/com.ingsorre97.render-hell/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).version")
+          echo "Base version: $BASE_VERSION"
+          echo "base_version=$BASE_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get head branch version
+        id: head
+        run: |
+          HEAD_VERSION=$(node -p "require('./Packages/com.ingsorre97.render-hell/package.json').version")
+          echo "Head version: $HEAD_VERSION"
+          echo "head_version=$HEAD_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Compare versions
+        run: |
+          echo "### 🔍 Version Check Result" >> $GITHUB_STEP_SUMMARY
+          echo "Base: ${{ steps.base.outputs.base_version }}"
+          echo "Head: ${{ steps.head.outputs.head_version }}"
+          if [ "${{ steps.base.outputs.base_version }}" = "${{ steps.head.outputs.head_version }}" ]; then
+            echo "❌ **Version unchanged** — please increase \`package.json\` version before merging." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ **Version updated correctly from ${{ steps.base.outputs.base_version }} to ${{ steps.head.outputs.head_version }}.**" >> $GITHUB_STEP_SUMMARY
+          fi
+      
