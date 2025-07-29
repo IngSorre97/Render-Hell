@@ -1,31 +1,45 @@
 {
   "name": "com.ingsorre97.render-hell",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "displayName": "Render Hell",
   "description": "A Unity project designed to test my HLSL skills and your GPU patience. ",
   "unity": "2022.3",
   "unityRelease": "15f1",
-  "documentationUrl": "https://openupm.com/packages/com.studio23.ss2.{package_name}/",
+  "documentationUrl": "https://openupm.com/packages/com.ingsorre97.render-hell/",
   "licensesUrl": "https://opensource.org/license/mit/",
   "scopedRegistries":  [
     {
       "name": "Render Hell",
       "url": "https://package.openupm.com",
       "scopes": [
-        "com.studio23.ss2"
+        "com.ingsorre97.render-hell"
       ]
     }], 
   "dependencies": {
-    "com.unity.render-pipelines.universal": "14.0.9"
+    "com.unity.render-pipelines.universal": "14.0.9",
+    "com.unity.burst": "1.8.17",
+    "com.unity.collections": "2.4.3",
+    "com.unity.mathematics": "1.2.6",
+    "com.unity.jobs": "0.70.0-preview.7"
+ },
+ "devDependencies": {
+  "com.microsoft.mixedreality.openxr": "1.10.0",
+  "com.microsoft.mixedreality.toolkit.foundation": "2.8.3",
+  "com.microsoft.mixedreality.toolkit.testutilities": "2.8.3",
+  "com.microsoft.mixedreality.toolkit.tools": "2.8.3",
+  "com.unity.xr.openxr": "1.15.0"
  },
  "keywords": [
     "Rendering",
-    "URP"
+    "URP",
+    "Unity Jobs",
+    "Compute shader",
+    "HLSL"
   ],
 "samples": [
     {
       "displayName": "Brush3D sample",
-      "description": "A small sample configured with MRTK to demonstrate 3D capabilities of the Brush3D.",
+      "description": "A small sample configured with MRTK to demonstrate 3D capabilities of the Brush3D in an augmented reality environment.",
       "path": "Samples~/Brush3D"
     }
   ],  
