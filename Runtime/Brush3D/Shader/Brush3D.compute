@@ -11,7 +11,7 @@
 
 #include "Packages/com.ingsorre97.render-hell/Runtime/Brush3D/Shader/Brush3DCommon.cginc"
 
-RWTexture3D<float> _SelectionMask;
+RWTexture2DArray<float> _SelectionMask;
 
 float _ResetDrawnRegionIndex;
 float _ClipDrawnRegionIndex;

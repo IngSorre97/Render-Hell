@@ -9,7 +9,7 @@
 
 float _Initialized;
 
-Texture3D<float> _SelectionMask;
+Texture2DArray<float> _SelectionMask;
 
 float4 _OutlineColor;
 float _OutlineThickness;

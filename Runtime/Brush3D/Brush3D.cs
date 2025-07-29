@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Threading.Tasks;
+using UnityEngine;
+// ReSharper disable Unity.InefficientPropertyAccess
 
 namespace IngSorre97.RenderHell.Brush3D
 {
@@ -7,6 +9,7 @@ namespace IngSorre97.RenderHell.Brush3D
         const int SELECTION_MASK_SIZE = 512;
         
         [SerializeField] ComputeShader m_computeShader;
+        [SerializeField] ExtrapolatedDrawnRegion m_extrapolatedPrefab;
 
         float m_radius;
         float m_outlineThickness;
@@ -14,12 +17,12 @@ namespace IngSorre97.RenderHell.Brush3D
         MeshRenderer m_meshRenderer;
         Mesh m_mesh;
         
-        Brush3DRenderPass m_renderPass;
+        Brush3DRenderPass m_brushRenderPass;
         Brush3DPropertiesManager m_brushPropertiesManager;
 
         void OnDestroy()
         {
-            m_renderPass.Dispose();
+            m_brushRenderPass.Dispose();
         }
 
         public void Setup(MeshRenderer meshRenderer, Mesh mesh, Brush3DProperties intersectingProperties)
@@ -27,8 +30,8 @@ namespace IngSorre97.RenderHell.Brush3D
             m_meshRenderer = meshRenderer;
             m_mesh = mesh;
             
-            m_renderPass = new Brush3DRenderPass(meshRenderer, m_mesh.bounds, m_computeShader, SELECTION_MASK_SIZE);
-            m_brushPropertiesManager = new Brush3DPropertiesManager(m_renderPass, intersectingProperties);
+            m_brushRenderPass = new Brush3DRenderPass(meshRenderer, m_mesh.bounds, m_computeShader, SELECTION_MASK_SIZE);
+            m_brushPropertiesManager = new Brush3DPropertiesManager(m_brushRenderPass, intersectingProperties);
         }
 
         public void SetPosition(Vector3 pos)
@@ -40,7 +43,7 @@ namespace IngSorre97.RenderHell.Brush3D
                 (localPos.z - m_mesh.bounds.min.z) / (m_mesh.bounds.max.z - m_mesh.bounds.min.z)
             );
             
-            m_renderPass.SetPosition(normalizedPos);
+            m_brushRenderPass.SetPosition(normalizedPos);
         }
 
         public void SetRadius(float radius)
@@ -52,7 +55,7 @@ namespace IngSorre97.RenderHell.Brush3D
             }
             
             m_radius = radius;
-            m_renderPass.SetRadius(NormalizeLengthInBoundsExtent(radius));
+            m_brushRenderPass.SetRadius(NormalizeLengthInBoundsExtent(radius));
             
             if (m_outlineThickness <= radius)
             {
@@ -65,17 +68,17 @@ namespace IngSorre97.RenderHell.Brush3D
         
         public void StartIntersecting()
         {
-            m_renderPass.StartIntersecting();
+            m_brushRenderPass.StartIntersecting();
         }
 
         public void StopIntersecting()
         {
-            m_renderPass.StopIntersecting();
+            m_brushRenderPass.StopIntersecting();
         }
 
         public void SetOutlineColor(Color color)
         {
-            m_renderPass.SetOutlineColor(color);
+            m_brushRenderPass.SetOutlineColor(color);
         }
 
         public void SetOutlineThickness(float thickness)
@@ -93,7 +96,7 @@ namespace IngSorre97.RenderHell.Brush3D
             }
             
             m_outlineThickness = thickness;
-            m_renderPass.SetOutlineThickness(NormalizeLengthInBoundsExtent(thickness));
+            m_brushRenderPass.SetOutlineThickness(NormalizeLengthInBoundsExtent(thickness));
         }
 
         public void AddDrawingProperties(Brush3DProperties properties)
@@ -135,12 +138,12 @@ namespace IngSorre97.RenderHell.Brush3D
         
         public void StartClipping()
         {
-            m_renderPass.SetClippingIndex(1);
+            m_brushRenderPass.SetClippingIndex(1);
         }
 
         public void StopClipping()
         {
-            m_renderPass.SetClippingIndex(0);
+            m_brushRenderPass.SetClippingIndex(0);
         }
 
         public void ResetDrawnRegion(Brush3DProperties properties)
@@ -155,9 +158,23 @@ namespace IngSorre97.RenderHell.Brush3D
 
         public void ResetClippedRegion()
         {
-            m_renderPass.ResetClippedRegion();
+            m_brushRenderPass.ResetClippedRegion();
         }
-        
+
+        public async Task<GameObject> ExtrapolateDrawnRegion(Brush3DProperties properties, bool keepLink)
+        {
+            var extrapolatedMesh = await m_brushPropertiesManager.ExtrapolateDrawnRegion(m_mesh, SELECTION_MASK_SIZE, properties);
+
+            var extrapolatedDrawnRegion = Instantiate(m_extrapolatedPrefab);
+            extrapolatedDrawnRegion.MeshFilter.sharedMesh = extrapolatedMesh;
+            extrapolatedDrawnRegion.MeshRenderer.sharedMaterial = m_brushRenderPass.CloneBrushMaterial(keepLink);
+            extrapolatedDrawnRegion.BoxCollider.bounds.Encapsulate(extrapolatedMesh.bounds);
+            extrapolatedDrawnRegion.transform.localScale = m_meshRenderer.transform.lossyScale;
+            extrapolatedDrawnRegion.transform.position = m_meshRenderer.transform.position;
+            extrapolatedDrawnRegion.transform.rotation = m_meshRenderer.transform.rotation;
+            return extrapolatedDrawnRegion.gameObject;
+        }
+
         float NormalizeLengthInBoundsExtent(float length)
         {
             float boundsExtent = Mathf.Max(m_mesh.bounds.extents.x, m_mesh.bounds.extents.y, m_mesh.bounds.extents.z);
