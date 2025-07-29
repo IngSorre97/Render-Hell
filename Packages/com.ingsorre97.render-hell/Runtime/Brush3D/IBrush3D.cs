@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace IngSorre97.RenderHell.Brush3D
@@ -46,5 +47,8 @@ namespace IngSorre97.RenderHell.Brush3D
         void ClipDrawnRegion(Brush3DProperties properties);
         
         void ResetClippedRegion();
+
+        /// <exception cref="InvalidOperationException">If called with intersecting properties.</exception>
+        Task<GameObject> ExtrapolateDrawnRegion(Brush3DProperties properties, bool keepLink);
     }
 }
