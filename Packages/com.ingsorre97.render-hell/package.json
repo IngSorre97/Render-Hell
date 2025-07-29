@@ -1,6 +1,6 @@
 {
   "name": "com.ingsorre97.render-hell",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "displayName": "Render Hell",
   "description": "A Unity project designed to test my HLSL skills and your GPU patience. ",
   "unity": "2022.3",
