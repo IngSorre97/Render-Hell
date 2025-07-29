@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using IngSorre97.RenderHell.Brush3D.Jobs;
 using UnityEngine;
 
 namespace IngSorre97.RenderHell.Brush3D
@@ -114,7 +116,16 @@ namespace IngSorre97.RenderHell.Brush3D
             
             m_renderPass.ClipDrawnRegion(index);
         }
-        
+
+        public async Task<Mesh> ExtrapolateDrawnRegion(Mesh mesh, int selectionMaskSize, Brush3DProperties properties)
+        {
+            if (!DoPropertiesExists(properties, out int index)) return null;
+            EnsureNoIntersectingProperties(properties, "ExtrapolateDrawnRegion");
+            
+            using var selectionMask = await m_renderPass.GetSelectionMask();
+            return Brush3DJobs.ExtrapolateDrawnRegion(mesh, selectionMask, selectionMaskSize, index);
+        }
+
         void EnsureNoIntersectingProperties(Brush3DProperties properties, string operation)
         {
             if (properties != IntersectingProperties)
