@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
@@ -11,22 +13,35 @@ namespace IngSorre97.RenderHell.Brush3D.Jobs
         public static Mesh ExtrapolateDrawnRegion(Mesh mesh, NativeArray<float> selectionMask, int selectionMaskSize, int index)
         {
             using var extrapolatedVertices = new NativeParallelHashMap<int, ExtrapolatedVertex>(mesh.vertices.Length, Allocator.Persistent);
-            using var extrapolatedTriangles = new NativeList<int3>(mesh.triangles.Length, Allocator.Persistent);
+            using var extrapolatedTriangles = new NativeList<int3>(mesh.triangles.Length / 3, Allocator.Persistent);
             
             int verticesCount = ExtrapolateVertices(mesh, extrapolatedVertices, selectionMask, selectionMaskSize, index);
             Debug.Log($"Found {verticesCount} drawn vertices: ({verticesCount}/{mesh.vertices.Length})\n" +
                       $"{verticesCount / (float)mesh.vertices.Length:0.00}%");
+            
+            if (extrapolatedVertices.Count() != verticesCount)
+            {
+                throw new InsufficientMemoryException(
+                    $"Insufficient memory, expected {verticesCount} vertex entries but found {extrapolatedVertices.Count()}");
+            }
 
             var trianglesCount = ExtrapolateTriangles(mesh, extrapolatedVertices, extrapolatedTriangles);
             Debug.Log($"Found {trianglesCount} drawn triangles: ({trianglesCount}/{mesh.triangles.Length / 3})\n" +
                       $"{trianglesCount / ((float)mesh.triangles.Length / 3):0.00}%");
+
+            if (extrapolatedTriangles.Length != trianglesCount)
+            {
+                throw new InsufficientMemoryException(
+                    $"Insufficient memory, expected {trianglesCount} triangle entries but found {extrapolatedTriangles.Length}");
+            }
             
             var vertices = new Vector3[verticesCount + 1];
             using var vertexIndexes = extrapolatedVertices.GetValueArray(Allocator.Persistent);
             vertexIndexes.Sort();
             for (int i = 0; i < vertexIndexes.Length; i++)
             {
-                vertices[i+1] = vertexIndexes[i].Vertex;
+                var vertex = vertexIndexes[i].Vertex;
+                vertices[i+1] = vertex;
             }
 
             var triangles = new int[trianglesCount * 3];
@@ -85,7 +100,7 @@ namespace IngSorre97.RenderHell.Brush3D.Jobs
                 ExtrapolatedTrianglesCount = extrapolatedTrianglesCount
             };
             
-            JobHandle handle = job.ScheduleByRef(meshTriangles.Length / 3, 1);
+            JobHandle handle = job.ScheduleByRef(mesh.triangles.Length / 3, 32);
             handle.Complete();
             
             return extrapolatedTrianglesCount[0];

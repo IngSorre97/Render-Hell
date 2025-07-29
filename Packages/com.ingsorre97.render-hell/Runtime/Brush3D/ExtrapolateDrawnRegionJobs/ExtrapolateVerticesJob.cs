@@ -53,7 +53,6 @@ namespace IngSorre97.RenderHell.Brush3D.Jobs
             ExtrapolatedVertices.TryAdd(index, new ExtrapolatedVertex
             {
                 Vertex = vertex,
-                OldIndex = index,
                 NewIndex = newIndex
             });
         }
